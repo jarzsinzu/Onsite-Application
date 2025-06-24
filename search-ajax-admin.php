@@ -1,0 +1,102 @@
+<?php
+require('include/koneksi.php');
+
+$search = $_POST['search'] ?? '';
+$page = $_POST['page'] ?? 1;
+$records_per_page = 5;
+$offset = ($page - 1) * $records_per_page;
+
+$search = mysqli_real_escape_string($conn, $search);
+
+$base_query = "FROM tambah_onsite";
+$where = "";
+if (!empty($search)) {
+    $where = "WHERE tanggal LIKE '%$search%' 
+           OR keterangan_kegiatan LIKE '%$search%' 
+           OR status_pembayaran LIKE '%$search%'";
+}
+
+$count_query = "SELECT COUNT(*) as total $base_query $where";
+$count_result = mysqli_query($conn, $count_query);
+$total_rows = mysqli_fetch_assoc($count_result)['total'];
+$total_pages = ceil($total_rows / $records_per_page);
+
+$query = "SELECT * $base_query $where ORDER BY id DESC LIMIT $offset, $records_per_page";
+$result = mysqli_query($conn, $query);
+?>
+
+<table class="table table-bordered align-middle table-rounded">
+    <thead class="table-dark">
+        <tr>
+            <th>Anggota</th>
+            <th>Tanggal</th>
+            <th>Lokasi</th>
+            <th>Detail Kegiatan</th>
+            <th>Waktu</th>
+            <th>Dokumentasi</th>
+            <th>Biaya</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+            <tr>
+                <td>Syams<br>Fajar<br>Farza</td>
+                <td><?= htmlspecialchars($row['tanggal']) ?></td>
+                <td style="width: 240px; height: 240px;">
+                    <?php if ($row['latitude'] && $row['longitude']) : ?>
+                        <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    <?php else : ?>
+                        <em>Lokasi tidak tersedia</em>
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($row['keterangan_kegiatan']) ?></td>
+                <td><?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
+                <td>
+                    <?php if (!empty($row['dokumentasi'])) : ?>
+                        <a href="uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
+                    <?php else : ?>
+                        Tidak ada
+                    <?php endif; ?>
+                </td>
+                <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
+                <td>
+                    <form method="POST" action="ubah-status.php" style="display:inline-block;">
+                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                        <select name="status_pembayaran" onchange="this.form.submit()" class="form-select form-select-sm" required>
+                            <option <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+                            <option <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+                            <option <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                        </select>
+                    </form>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+    </tbody>
+</table>
+
+<div class="pagination">
+    <?php if ($page > 1): ?>
+        <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+    <?php endif; ?>
+    <?php
+    $start = max(1, $page - 2);
+    $end = min($total_pages, $page + 2);
+    if ($start > 1) {
+        echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+        if ($start > 2) echo '<span>...</span>';
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? 'active' : '';
+        echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+    }
+    if ($end < $total_pages) {
+        if ($end < $total_pages - 1) echo '<span>...</span>';
+        echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+    }
+    ?>
+    <?php if ($page < $total_pages): ?>
+        <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+    <?php endif; ?>
+</div>
