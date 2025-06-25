@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
 $user_id = $_SESSION['user_id'] ?? 0;
 $search = $_POST['search'] ?? '';
@@ -92,7 +92,7 @@ $result = mysqli_query($conn, $data_query);
                 </td>
                 <td>
                     <?php if (!empty($row['file_csv'])): ?>
-                        <a href="download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
+                        <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
                     <?php endif; ?>
                 </td>
 

@@ -1,11 +1,11 @@
 <?php
 session_start();
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
-// if (!isset($_SESSION['user'])) {
-//     header("Location: test-login.php");
-//     exit();
-// }
+if (!isset($_SESSION['user'])) {
+    header("Location: ../login.php");
+    exit();
+}
 
 $user_id = $_SESSION['user_id'];
 ?>
@@ -43,7 +43,7 @@ $user_id = $_SESSION['user_id'];
 <body>
     <div class="container">
         <h4 class="mb-4">Form Tambah Data Onsite (Manual & CSV)</h4>
-        <form action="proses-tambah-test.php" method="POST" enctype="multipart/form-data">
+        <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="user_id" value="<?= $user_id ?>">
 
             <div class="mb-3">
@@ -56,7 +56,7 @@ $user_id = $_SESSION['user_id'];
                 <label for="anggota_ids">Pilih Anggota Tim</label>
                 <select name="anggota_ids[]" id="anggota_ids" class="form-control" multiple required>
                     <?php
-                    require('include/koneksi.php'); // pastikan koneksi dimuat di atas file
+                    require('../include/koneksi.php'); // pastikan koneksi dimuat di atas file
                     $query = mysqli_query($conn, "SELECT id, nama FROM anggota");
                     while ($row = mysqli_fetch_assoc($query)) {
                         echo "<option value='{$row['id']}'>{$row['nama']}</option>";

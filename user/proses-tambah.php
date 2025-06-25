@@ -1,148 +1,124 @@
 <?php
+// Tampilkan error (penting saat debug)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 require('../include/koneksi.php');
 
-// // Cek apakah pengguna sudah login
-// if (!isset($_SESSION['user'])) {
-//     header("Location: ../login.php");
-//     exit();
-// }
-
-if (isset($_POST['simpan'])) {
-    // Ambil data dari form
-    $user_id = $_SESSION['user_id'];
-    $tanggal = $_POST['tanggal'] ?? '';
-    $latitude = $_POST['latitude'] ?? '';
-    $longitude = $_POST['longitude'] ?? '';
-    $keterangan_kegiatan = $_POST['keterangan_kegiatan'] ?? '';
-    $jam_mulai = $_POST['jam_mulai'] ?? '';
-    $jam_selesai = $_POST['jam_selesai'] ?? '';
-
-    $estimasi_biaya = $_POST['estimasi_biaya'] ?? '';
-    $dokumentasi = $_FILES['dokumentasi'];
-    $status_pembayaran = 'Menunggu'; // default status  
-
-    // Validasi upload
-    $allowed_ext = ['pdf', 'jpg', 'jpeg', 'png'];
-    $file_name = basename($dokumentasi['name']);
-    $file_tmp = $dokumentasi['tmp_name'];
-    $file_size = $dokumentasi['size'];
-    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-    // Folder upload
-    $upload_dir = '../uploads/';
-    $unique_name = time() . '-' . preg_replace("/[^a-zA-Z0-9.]/", "", $file_name); // aman dan unik
-    $target_file = $upload_dir . $unique_name;
-
-    // Cek ekstensi
-    if (!in_array($file_ext, $allowed_ext)) {
-        echo "<script>
-            alert('Format file tidak diizinkan!');
-            window.location.href = 'tambah.php';
-        </script>";
-        die();
-    }
-
-    // Cek ukuran
-    if ($file_size > 5 * 1024 * 1024) {
-        echo "<script>
-            alert('Ukuran file maksimal 5MB!');
-            window.location.href = 'tambah.php';
-        </script>";
-        die();;
-    }
-
-    // Validasi lokasi
-    if (empty($latitude) || empty($longitude)) {
-        echo "<script>
-                alert('Lokasi tidak terdeteksi! Pastikan akses lokasi diaktifkan.');
-                window.location.href = 'tambah.php';
-            </script>";
-        exit();
-    }
-
-    if (!is_numeric($latitude) || !is_numeric($longitude)) {
-        echo "<script>
-                alert('Format lokasi tidak valid.');
-                window.location.href = 'tambah.php';
-            </script>";
-        exit();
-    }
-
-
-    // Upload file
-    if (move_uploaded_file($file_tmp, $target_file)) {
-        // Simpan ke database
-        $query = "INSERT INTO tambah_onsite (user_id, tanggal, latitude, longitude, keterangan_kegiatan, estimasi_biaya, dokumentasi, status_pembayaran, jam_mulai, jam_selesai)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, "sssssssss", $user_id, $tanggal, $latitude, $longitude, $keterangan_kegiatan, $estimasi_biaya, $unique_name, $status_pembayaran, $jam_mulai, $jam_selesai);
-
-        if (mysqli_stmt_execute($stmt)) {
-            header("Location: dashboard-user.php?success=1");
-            exit();
-        } else {
-            echo "Gagal menyimpan ke database: " . mysqli_error($conn);
-        }
-    } else {
-        echo "Upload file gagal.";
-    }
-    
+if (!isset($_SESSION['user'])) {
+    header("Location: ../login.php");
+    exit();
 }
 
-// // Ambil data dari form
-// $tanggal = $_POST['tanggal'] ?? '';
-// $lokasi = $_POST['lokasi'] ?? '';
-// $keterangan_kegiatan = $_POST['keterangan_kegiatan'] ?? '';
-// $estimasi_biaya = $_POST['estimasi_biaya'] ?? '';
-// $dokumentasi = $_FILES['dokumentasi'];
-// $status_pembayaran = 'Menunggu'; // default status
+function simpanData($conn, $data, $user_id)
+{
+    $stmt = $conn->prepare("INSERT INTO tambah_onsite (
+        user_id, tanggal, latitude, longitude, keterangan_kegiatan,
+        jam_mulai, jam_selesai, estimasi_biaya, dokumentasi, file_csv, status_pembayaran
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-// // Validasi upload
-// $allowed_ext = ['pdf', 'jpg', 'jpeg', 'png'];
-// $file_name = basename($dokumentasi['name']);
-// $file_tmp = $dokumentasi['tmp_name'];
-// $file_size = $dokumentasi['size'];
-// $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+    if (!$stmt) {
+        die("Prepare failed: " . $conn->error);
+    }
 
-// // Folder upload
-// $upload_dir = '../uploads/';
-// $unique_name = time() . '-' . preg_replace("/[^a-zA-Z0-9.]/", "", $file_name); // aman dan unik
-// $target_file = $upload_dir . $unique_name;
+    $estimasi_biaya = (float)$data['estimasi_biaya'];
 
-// // Cek ekstensi
-// if (!in_array($file_ext, $allowed_ext)) {
-//     echo "<script>
-//         alert('Format file tidak diizinkan!');
-//         window.location.href = 'tambah.php';
-//     </script>";
-//     die();
-// }
+    $stmt->bind_param(
+        "sssssssdsss",
+        $user_id,
+        $data['tanggal'],
+        $data['latitude'],
+        $data['longitude'],
+        $data['keterangan_kegiatan'],
+        $data['jam_mulai'],
+        $data['jam_selesai'],
+        $estimasi_biaya,
+        $data['dokumentasi'],
+        $data['file_csv'],
+        $data['status_pembayaran']
+    );
 
-// // Cek ukuran
-// if ($file_size > 5 * 1024 * 1024) {
-//     echo "<script>
-//         alert('Ukuran file maksimal 5MB!');
-//         window.location.href = 'tambah.php';
-//     </script>";
-//     die();;
-// }
+    if ($stmt->execute()) {
+        return $conn->insert_id; // return ID onsite baru
+    } else {
+        return false;
+    }
+}
 
-// // Upload file
-// if (move_uploaded_file($file_tmp, $target_file)) {
-//     // Simpan ke database
-//     $query = "INSERT INTO tambah_onsite (tanggal, lokasi, keterangan_kegiatan, estimasi_biaya, dokumentasi, status_pembayaran)
-//               VALUES (?, ?, ?, ?, ?, ?)";
-//     $stmt = mysqli_prepare($conn, $query);
-//     mysqli_stmt_bind_param($stmt, "sssdss", $tanggal, $lokasi, $keterangan_kegiatan, $estimasi_biaya, $unique_name, $status_pembayaran);
+if (isset($_POST['simpan'])) {
+    $user_id = $_POST['user_id'];
+    $status_pembayaran = 'Menunggu';
+    $upload_dir_dok = 'uploads/';
+    $upload_dir_csv = 'csv/';
+    $dokumentasi = '';
+    $file_csv = '';
 
-//     if (mysqli_stmt_execute($stmt)) {
-//         header("Location: dashboard-user.php?success=1");
-//         exit();
-//     } else {
-//         echo "Gagal menyimpan ke database: " . mysqli_error($conn);
-//     }
-// } else {
-//     echo "Upload file gagal.";
-// }
+    // Upload dokumentasi
+    if (!empty($_FILES['dokumentasi']['name'])) {
+        $dok = $_FILES['dokumentasi'];
+        $ext = strtolower(pathinfo($dok['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+
+        if (in_array($ext, $allowed)) {
+            $new_name = time() . '-' . basename($dok['name']);
+            $target = $upload_dir_dok . $new_name;
+            if (move_uploaded_file($dok['tmp_name'], $target)) {
+                $dokumentasi = $new_name;
+            }
+        }
+    }
+
+    // Upload CSV
+    if (!empty($_FILES['file_csv']['name'])) {
+        $csv = $_FILES['file_csv'];
+        $ext = strtolower(pathinfo($csv['name'], PATHINFO_EXTENSION));
+        if ($ext === 'csv') {
+            $new_name = time() . '-' . uniqid() . '-' . basename($csv['name']);
+            $target = $upload_dir_csv . $new_name;
+            if (move_uploaded_file($csv['tmp_name'], $target)) {
+                $file_csv = $new_name;
+            }
+        }
+    }
+
+    // Validasi input wajib
+    if (!empty($_POST['tanggal']) && !empty($_POST['keterangan_kegiatan'])) {
+        $data = [
+            'tanggal' => $_POST['tanggal'],
+            'latitude' => $_POST['latitude'],
+            'longitude' => $_POST['longitude'],
+            'keterangan_kegiatan' => $_POST['keterangan_kegiatan'],
+            'jam_mulai' => $_POST['jam_mulai'],
+            'jam_selesai' => $_POST['jam_selesai'],
+            'estimasi_biaya' => $_POST['estimasi_biaya'],
+            'dokumentasi' => $dokumentasi,
+            'file_csv' => $file_csv,
+            'status_pembayaran' => $status_pembayaran
+        ];
+
+        // Simpan data ke tabel utama
+        $id_onsite = simpanData($conn, $data, $user_id);
+
+        if ($id_onsite) {
+            // Simpan anggota tim (jika ada)
+            if (!empty($_POST['anggota_ids']) && is_array($_POST['anggota_ids'])) {
+                $stmt = $conn->prepare("INSERT INTO tim_onsite (id_onsite, id_anggota) VALUES (?, ?)");
+
+                foreach ($_POST['anggota_ids'] as $id_anggota) {
+                    $id_anggota = (int)$id_anggota;
+                    $stmt->bind_param("ii", $id_onsite, $id_anggota);
+                    $stmt->execute();
+                }
+                $stmt->close();
+            }
+
+            header("Location: dashboard-user.php?sukses=1");
+            exit();
+        } else {
+            echo "❌ Gagal menyimpan data utama.";
+        }
+    } else {
+        echo "❌ Tanggal dan keterangan kegiatan wajib diisi.";
+    }
+}

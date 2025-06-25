@@ -2,30 +2,12 @@
 session_start();
 require('../include/koneksi.php');
 
-// Cek apakah pengguna sudah login
-if (!isset($_SESSION['user'])) {
-    // Jika belum login, redirect ke halaman login
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
-    exit(); // Penting untuk menghentikan eksekusi kode setelah redirect
+    exit();
 }
 
 $current_page = basename($_SERVER['PHP_SELF']);
-
-// Pagination logic
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$records_per_page = 5;
-$offset = ($page - 1) * $records_per_page;
-
-// Count total records
-$count_query = "SELECT COUNT(*) as total FROM tambah_onsite";
-$count_result = mysqli_query($conn, $count_query);
-$total_rows = mysqli_fetch_assoc($count_result)['total'];
-$total_pages = ceil($total_rows / $records_per_page);
-
-// Get data for current page
-$query = "SELECT * FROM tambah_onsite ORDER BY id DESC LIMIT $offset, $records_per_page";
-$result = mysqli_query($conn, $query);
-
 $username = $_SESSION['user'];
 ?>
 
@@ -35,37 +17,26 @@ $username = $_SESSION['user'];
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard User - ACTIVin</title>
-
-    <!-- Fonts & Icons -->
+    <title>Dashboard Admin - ACTIVin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
         body {
             display: flex;
             background-color: #f5f5f5;
             color: #333;
+            font-family: 'Inter', sans-serif;
         }
 
         .sidebar {
             width: 200px;
-            background-color: #1c1c1c;
-            color: white;
+            background: #1c1c1c;
+            color: #fff;
             padding: 30px 20px;
             height: 100vh;
             position: fixed;
-            display: flex;
-            flex-direction: column;
         }
 
         .sidebar h2 {
@@ -77,7 +48,7 @@ $username = $_SESSION['user'];
         .nav-container {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: 90%;
             justify-content: space-between;
         }
 
@@ -128,8 +99,6 @@ $username = $_SESSION['user'];
             padding: 10px 40px 10px 16px;
             border-radius: 20px;
             border: 1px solid #ccc;
-            background-color: #fff;
-            color: #333;
         }
 
         .input-with-icon i {
@@ -138,7 +107,17 @@ $username = $_SESSION['user'];
             top: 50%;
             transform: translateY(-50%);
             color: #888;
-            pointer-events: none;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile span {
+            color: #1c1c1c;
+            padding: 5px;
+            font-weight: bold;
         }
 
         .header-section {
@@ -149,10 +128,10 @@ $username = $_SESSION['user'];
         }
 
         .btn-tambah {
+            background-color: #48cfcb;
             border: none;
             padding: 10px 20px;
             border-radius: 8px;
-            background-color: #48cfcb;
             color: white;
             font-weight: 600;
             text-decoration: none;
@@ -160,7 +139,6 @@ $username = $_SESSION['user'];
 
         .btn-tambah:hover {
             background-color: #229799;
-            color: white;
         }
 
         .iframe-map {
@@ -170,7 +148,6 @@ $username = $_SESSION['user'];
             border-radius: 6px;
         }
 
-        /* Fix pagination agar lebih rapi */
         .pagination {
             display: flex;
             justify-content: flex-end;
@@ -186,7 +163,6 @@ $username = $_SESSION['user'];
             color: #48cfcb;
             border-radius: 4px;
             text-decoration: none;
-            font-weight: 500;
         }
 
         .pagination a.active {
@@ -212,38 +188,21 @@ $username = $_SESSION['user'];
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            /* Menambahkan shadow */
             background-color: white;
-            /* Menambahkan latar belakang putih */
         }
 
         .table th {
             background-color: #1c1c1c;
-            /* Warna latar belakang untuk header */
             color: white;
-            /* Warna teks untuk header */
         }
 
         .table td {
             border-bottom: 2px solid #dee2e6;
             text-align: center;
-            /* Garis bawah untuk sel */
         }
 
         .table tr:hover {
             background-color: #f8f9fa;
-            /* Warna latar belakang saat hover */
-        }
-
-        .profile {
-          display: flex;
-          align-items: center;
-        }
-
-        .profile span {
-          color: #1c1c1c;
-          font-weight: bold;
-          padding: 5px;
         }
     </style>
 </head>
@@ -267,11 +226,11 @@ $username = $_SESSION['user'];
         <form class="search-bar" method="post">
             <div class="topbar">
                 <div class="input-with-icon">
-                    <input type="text" placeholder="Cari onsite..." name="search">
+                    <input type="text" placeholder="Cari onsite..." name="search" id="search-input-admin" autocomplete="off">
                     <i class="bi bi-search"></i>
                 </div>
                 <div class="profile">
-                    <span><?php echo $_SESSION['user'] = $username;?></span>
+                    <span><?= htmlspecialchars($username) ?></span>
                     <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
                 </div>
             </div>
@@ -279,124 +238,43 @@ $username = $_SESSION['user'];
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> Karyawan</h2>
-            <a href="user/tambah.php" class="btn-tambah">+ Tambah Data Onsite</a>
+            <a href="../user/tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle table-rounded">
-                <thead class="table-dark">
-                    <tr style="text-align: center;">
-                        <th style="width: 100px;">Anggota</th>
-                        <th>Tanggal</th>
-                        <th>Lokasi</th>
-                        <th>Detail Kegiatan</th>
-                        <th>Waktu</th>
-                        <th>Dokumentasi</th>
-                        <th>Biaya</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    while ($row = mysqli_fetch_assoc($result)) :
-                        $latitude = $row['latitude'];
-                        $longitude = $row['longitude'];
-                    ?>
-                        <tr>
-                            <td>Syams<br>Fajar<br>Farza</td>
-                            <td><?= htmlspecialchars($row['tanggal']) ?></td>
-                            <td style="width: 240px; height: 240px;">
-                                <?php if ($latitude && $longitude): ?>
-                                    <iframe
-                                        src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
-                                    </iframe>
-                                <?php else: ?>
-                                    <em>Lokasi tidak tersedia</em>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= htmlspecialchars($row['keterangan_kegiatan']) ?></td>
-                            <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
-                            <td>
-                                <?php if (!empty($row['dokumentasi'])): ?>
-                                    <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
-                                <?php else: ?>
-                                    Tidak ada
-                                <?php endif; ?>
-                            </td>
-                            <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
-                            <td><span class="badge bg-warning text-dark"><?= htmlspecialchars($row['status_pembayaran']) ?></span></td>
-                            <!-- <td>
-                                <div class="badge bg-warning text-dark">
-                                    <?php
-                                    $status = $row['status_pembayaran'];
-                                    if ($status == 'Disetujui') {
-                                        echo '<span class="badge bg-success">' . $status . '</span>';
-                                    } elseif ($status == 'Menunggu') {
-                                        echo '<span class="badge bg-warning badge-bold-black">' . $status . '</span>';
-                                    } else {
-                                        echo '<span class="badge bg-danger">' . $status . '</span>';
-                                    }
-                                    ?>
-                                </div>
-                            </td> -->
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-            <div class="pagination">
-                <?php if ($page > 1): ?>
-                    <a href="?page=<?= $page - 1 ?>">&laquo;</a>
-                <?php endif; ?>
-
-                <?php
-                // Tampilkan maksimal 5 nomor halaman di sekitar halaman aktif
-                $start_page = max(1, $page - 2);
-                $end_page = min($total_pages, $page + 2);
-
-                if ($start_page > 1) {
-                    echo '<a href="?page=1">1</a>';
-                    if ($start_page > 2) {
-                        echo '<span>...</span>';
-                    }
-                }
-
-                for ($i = $start_page; $i <= $end_page; $i++): ?>
-                    <a href="?page=<?= $i ?>" <?= ($i == $page) ? 'class="active"' : '' ?>>
-                        <?= $i ?>
-                    </a>
-                <?php endfor; ?>
-
-                <?php if ($end_page < $total_pages) {
-                    if ($end_page < $total_pages - 1) {
-                        echo '<span>...</span>';
-                    }
-                    echo '<a href="?page=' . $total_pages . '">' . $total_pages . '</a>';
-                }
-                ?>
-
-                <?php if ($page < $total_pages): ?>
-                    <a href="?page=<?= $page + 1 ?>">&raquo;</a>
-                <?php endif; ?>
-            </div>
+        <div class="table-responsive" id="admin-data-container">
+            <?php include 'search-ajax-admin.php'; ?>
         </div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function loadAdminPage(page) {
+            const keyword = document.getElementById("search-input-admin").value;
+            const formData = new FormData();
+            formData.append("search", keyword);
+            formData.append("page", page);
+
+            fetch("search-ajax-admin.php", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("admin-data-container").innerHTML = html;
+                });
+        }
+
+        document.getElementById("search-input-admin").addEventListener("input", function() {
+            loadAdminPage(1);
+        });
+
+        document.addEventListener("click", function(e) {
+            if (e.target.classList.contains("pagination-link")) {
+                e.preventDefault();
+                const page = e.target.getAttribute("data-page");
+                loadAdminPage(page);
+            }
+        });
+    </script>
 </body>
 
 </html>
-
-<!-- function ubahStatus(statusEl) {
-    if (statusEl.classList.contains('pending')) {
-        statusEl.classList.remove('pending');
-        statusEl.classList.add('paid');
-        statusEl.innerText = 'Dibayar';
-    } else if (statusEl.classList.contains('paid')) {
-        statusEl.classList.remove('paid');
-        statusEl.classList.add('rejected');
-        statusEl.innerText = 'Ditolak';
-    } else {
-        statusEl.classList.remove('rejected');
-        statusEl.classList.add('pending');
-        statusEl.innerText = 'Menunggu';
-    }
-} -->

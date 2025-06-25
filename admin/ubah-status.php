@@ -1,10 +1,10 @@
 <?php
 session_start();
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
 // Hanya admin yang boleh mengakses
 if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
-    header("Location: test-login.php");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -27,5 +27,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-header("Location: admin-test.php");
+header("Location: dashboard-admin.php");
 exit();

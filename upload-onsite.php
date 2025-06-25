@@ -1,9 +1,9 @@
 <?php
 session_start();
-require 'include/koneksi.php';
+require '../include/koneksi.php';
 
 if (!isset($_SESSION['user'])) {
-    header("Location: test-login.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -64,7 +64,7 @@ if (isset($_FILES['csvFile']) && $_FILES['csvFile']['error'] === 0) {
 
     fclose($handle);
 
-    echo "<script>alert('Upload selesai. Berhasil: $sukses baris, Gagal: $gagal baris.'); window.location.href = 'tambah.php';</script>";
+    echo "<script>alert('Upload selesai. Berhasil: $sukses baris, Gagal: $gagal baris.'); window.location.href = 'user/tambah-data.php';</script>";
 } else {
-    echo "<script>alert('Gagal mengupload file.'); window.location.href='tambah.php';</script>";
+    echo "<script>alert('Gagal mengupload file.'); window.location.href='user/tambah-data.php';</script>";
 }

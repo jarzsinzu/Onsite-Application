@@ -1,5 +1,5 @@
 <?php
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
 $search = $_POST['search'] ?? '';
 $page = $_POST['page'] ?? 1;

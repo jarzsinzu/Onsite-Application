@@ -1,27 +1,27 @@
 <?php
 session_start();
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
-// if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-//     header("Location: test-login.php");
-//     exit();
-// }
+if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $records_per_page = 5;
 $offset = ($page - 1) * $records_per_page;
 
-// $user_id = $_SESSION['user_id'];
-// $username = $_SESSION['user'];
+$user_id = $_SESSION['user_id'];
+$username = $_SESSION['user'];
 
-// $count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
-// $count_result = mysqli_query($conn, $count_query);
-// $total_rows = mysqli_fetch_assoc($count_result)['total'];
-// $total_pages = ceil($total_rows / $records_per_page);
+$count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
+$count_result = mysqli_query($conn, $count_query);
+$total_rows = mysqli_fetch_assoc($count_result)['total'];
+$total_pages = ceil($total_rows / $records_per_page);
 
-// $query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
-// $result = mysqli_query($conn, $query);
+$query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
+$result = mysqli_query($conn, $query);
 ?>
 
 <!DOCTYPE html>
@@ -234,7 +234,7 @@ $offset = ($page - 1) * $records_per_page;
         <h2>ACTIV<span style="color: #48cfcb;">in</span></h2>
         <div class="nav-container">
             <div class="nav-links">
-                <a href="user-test.php" class="<?= $current_page == 'user-test.php' ? 'active' : '' ?>">
+                <a href="dashboard-user.php" class="<?= $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
                     <i class="bi bi-columns-gap"></i> Dashboard
                 </a>
                 <a href="history.php" class="<?= $current_page == 'history.php' ? 'active' : '' ?>">
@@ -242,7 +242,7 @@ $offset = ($page - 1) * $records_per_page;
                 </a>
             </div>
             <div class="logout-link">
-                <a href="logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="../logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a>
             </div>
         </div>
     </div>
@@ -263,10 +263,10 @@ $offset = ($page - 1) * $records_per_page;
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span></h2>
-            <a href="tambah-test.php" class="btn-tambah">+ Tambah Data Onsite</a>
+            <a href="tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a>
         </div>
         <div class="table-responsive" id="data-container">
-            <?php include 'search-ajax.php'; ?>
+            <?php include 'search-ajax-user.php'; ?>
         </div>
     </div>
 
@@ -278,7 +278,7 @@ $offset = ($page - 1) * $records_per_page;
             formData.append("search", keyword);
             formData.append("page", page);
 
-            fetch("search-ajax.php", {
+            fetch("search-ajax-user.php", {
                     method: "POST",
                     body: formData
                 })
@@ -302,7 +302,7 @@ $offset = ($page - 1) * $records_per_page;
                 formData.append("page", page);
                 formData.append("search", keyword);
 
-                fetch("search-ajax.php", {
+                fetch("search-ajax-user.php", {
                         method: "POST",
                         body: formData
                     })

@@ -1,11 +1,11 @@
 <?php
 session_start();
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
-// if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-//   header("Location: login.php");
-//   exit();
-// }
+if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit();
+}
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $username = $_SESSION['user'];
@@ -161,14 +161,14 @@ $username = $_SESSION['user'];
     <h2>ACTIV<span style="color: #48cfcb;">in</span></h2>
     <div class="nav-container">
       <div class="nav-links">
-        <a href="user-test.php" class="<?= $current_page == 'user-test.php' ? 'active' : '' ?>">
+        <a href="dashboard-user.php" class="<?= $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
           <i class="bi bi-columns-gap"></i> Dashboard
         </a>
         <a href="history.php" class="<?= $current_page == 'history.php' ? 'active' : '' ?>">
           <i class="bi bi-clock-history"></i> History
         </a>
       </div>
-      <div class="logout-link"><a href="logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a></div>
+      <div class="logout-link"><a href="../logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a></div>
     </div>
   </div>
 

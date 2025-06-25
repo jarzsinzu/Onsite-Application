@@ -3,11 +3,11 @@ session_start();
 require('include/koneksi.php');
 
 // Cek apakah pengguna sudah login
-if (!isset($_SESSION['user'])) {
-    // Jika belum login, redirect ke halaman login
-    header("Location: ../login.php");
-    exit(); // Penting untuk menghentikan eksekusi kode setelah redirect
-}
+// if (!isset($_SESSION['user'])) {
+//     // Jika belum login, redirect ke halaman login
+//     header("Location: ../login.php");
+//     exit(); // Penting untuk menghentikan eksekusi kode setelah redirect
+// }
 
 $current_page = basename($_SERVER['PHP_SELF']);
 

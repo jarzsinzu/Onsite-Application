@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require('include/koneksi.php');
+require('../include/koneksi.php');
 
 $user_id = $_SESSION['user_id'];
 $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
