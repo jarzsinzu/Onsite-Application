@@ -140,7 +140,7 @@ $result = mysqli_query($conn, $query);
             margin: 30px 0 20px;
         }
 
-        .header-section button {
+        .header-section a {
             background-color: #48cfcb;
             border: none;
             padding: 10px 20px;
@@ -150,7 +150,7 @@ $result = mysqli_query($conn, $query);
             text-decoration: none;
         }
 
-        .header-section button:hover {
+        .header-section a:hover {
             background-color: #229799;
         }
 
@@ -226,29 +226,6 @@ $result = mysqli_query($conn, $query);
         .table tr:hover {
             background-color: #f8f9fa;
         }
-
-        /* Pop-up */
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .popup-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            min-width: 400px;
-        }
-
-        /* Nyoba */
     </style>
 </head>
 
@@ -286,14 +263,7 @@ $result = mysqli_query($conn, $query);
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span></h2>
-            <!-- <a href="tambah-test.php" class="btn-tambah">+ Tambah Data Onsite</a> -->
-            <button class="btn-tambah" onclick="loadPopupForm()">+ Tambah Data</button>
-        </div>
-        <!-- Pop-up Container -->
-        <div class="popup-overlay" id="popupOverlay">
-            <div class="popup-content" id="popupContent">
-                <!-- Isi form dari file lain akan dimuat di sini -->
-            </div>
+            <a href="tambah-test.php" class="btn-tambah">+ Tambah Data Onsite</a>
         </div>
         <div class="table-responsive" id="data-container">
             <?php include 'search-ajax.php'; ?>
@@ -342,32 +312,6 @@ $result = mysqli_query($conn, $query);
                     });
             }
         });
-
-        // Pop-up Tambah data
-        function loadPopupForm() {
-            fetch('pop-up.php')
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('popupContent').innerHTML = html;
-                    document.getElementById('popupOverlay').style.display = 'flex';
-                });
-        }
-
-        function closePopup() {
-            document.getElementById('popupOverlay').style.display = 'none';
-        }
-        // function loadPopupForm() {
-        //     fetch('pop-up.php')
-        //         .then(response => response.text())
-        //         .then(html => {
-        //             document.getElementById('Main').innerHTML = html;
-        //             document.getElementById('containerCenter').style.display = 'flex';
-        //         });
-        // }
-
-        // function closePopup() {
-        //     document.getElementById('popupOverlay').style.display = 'none';
-        // }
     </script>
 </body>
 
