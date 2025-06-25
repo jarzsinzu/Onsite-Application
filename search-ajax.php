@@ -45,6 +45,7 @@ $result = mysqli_query($conn, $data_query);
             <th>Detail Kegiatan</th>
             <th style="width: 120px;">Waktu</th>
             <th>Dokumentasi</th>
+            <th>CSV</th>
             <th>Biaya</th>
             <th>Status</th>
         </tr>
@@ -70,11 +71,17 @@ $result = mysqli_query($conn, $data_query);
                 <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
                 <td>
                     <?php if (!empty($row['dokumentasi'])) : ?>
-                        <a href="uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
+                        <a href="/onsite-app/uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
                     <?php else : ?>
                         Tidak ada
                     <?php endif; ?>
                 </td>
+                <td>
+                    <?php if (!empty($row['file_csv'])): ?>
+                      <a href="download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
+                    <?php endif; ?>
+                </td>
+
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
                 <td><span class="badge bg-warning text-dark"><?= htmlspecialchars($row['status_pembayaran']) ?></span></td>
             </tr>
@@ -122,4 +129,3 @@ $result = mysqli_query($conn, $data_query);
         <?php endif; ?>
     <?php endif; ?>
 </div>
-
