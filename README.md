@@ -1,2 +1,2 @@
-# Onsite-Application
-By Syam &amp; jarzsinzu
+# Onsite-apps
+By Syam &amp; Fajar
