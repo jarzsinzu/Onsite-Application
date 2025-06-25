@@ -2,10 +2,10 @@
 session_start();
 require('include/koneksi.php');
 
-if (!isset($_SESSION['user'])) {
-    header("Location: test-login.php");
-    exit();
-}
+// if (!isset($_SESSION['user'])) {
+//     header("Location: test-login.php");
+//     exit();
+// }
 
 $user_id = $_SESSION['user_id'];
 ?>

@@ -2,26 +2,26 @@
 session_start();
 require('include/koneksi.php');
 
-if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-    header("Location: test-login.php");
-    exit();
-}
+// if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
+//     header("Location: test-login.php");
+//     exit();
+// }
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $records_per_page = 5;
 $offset = ($page - 1) * $records_per_page;
 
-$user_id = $_SESSION['user_id'];
-$username = $_SESSION['user'];
+// $user_id = $_SESSION['user_id'];
+// $username = $_SESSION['user'];
 
-$count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
-$count_result = mysqli_query($conn, $count_query);
-$total_rows = mysqli_fetch_assoc($count_result)['total'];
-$total_pages = ceil($total_rows / $records_per_page);
+// $count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
+// $count_result = mysqli_query($conn, $count_query);
+// $total_rows = mysqli_fetch_assoc($count_result)['total'];
+// $total_pages = ceil($total_rows / $records_per_page);
 
-$query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
-$result = mysqli_query($conn, $query);
+// $query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
+// $result = mysqli_query($conn, $query);
 ?>
 
 <!DOCTYPE html>

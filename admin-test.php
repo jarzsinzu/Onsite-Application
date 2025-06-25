@@ -2,10 +2,10 @@
 session_start();
 require('include/koneksi.php');
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
-    header("Location: test-login.php");
-    exit();
-}
+// if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
+//     header("Location: test-login.php");
+//     exit();
+// }
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $username = $_SESSION['user'];
