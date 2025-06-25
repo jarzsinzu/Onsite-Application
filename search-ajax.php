@@ -54,10 +54,24 @@ $result = mysqli_query($conn, $data_query);
         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
             <tr>
                 <td>
-                    <li>Muhammad Fajar Septiawan</li>
-                    <li>Muhammad Akbar Emur Hermawan</li>
-                    <li>Farzaliano Dwi Putra Heryadi</li>
+                    <ul style="padding-left: 15px;">
+                        <?php
+                        $id_onsite = $row['id'];
+                        $anggota_query = "
+            SELECT a.nama 
+            FROM tim_onsite t
+            JOIN anggota a ON t.id_anggota = a.id
+            WHERE t.id_onsite = $id_onsite
+        ";
+                        $anggota_result = mysqli_query($conn, $anggota_query);
+                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                            echo "<li>" . htmlspecialchars($anggota['nama']) . "</li>";
+                        }
+                        ?>
+                    </ul>
                 </td>
+
+
                 <td><?= htmlspecialchars($row['tanggal']) ?></td>
                 <td style="width: 240px; height: 240px;">
                     <?php if ($row['latitude'] && $row['longitude']) : ?>
@@ -78,7 +92,7 @@ $result = mysqli_query($conn, $data_query);
                 </td>
                 <td>
                     <?php if (!empty($row['file_csv'])): ?>
-                      <a href="download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
+                        <a href="download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
                     <?php endif; ?>
                 </td>
 

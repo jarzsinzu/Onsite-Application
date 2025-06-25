@@ -1,4 +1,8 @@
 <?php
+// Tampilkan error (penting saat debug)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 require('include/koneksi.php');
 
@@ -7,7 +11,8 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-function simpanData($conn, $data, $user_id) {
+function simpanData($conn, $data, $user_id)
+{
     $stmt = $conn->prepare("INSERT INTO tambah_onsite (
         user_id, tanggal, latitude, longitude, keterangan_kegiatan,
         jam_mulai, jam_selesai, estimasi_biaya, dokumentasi, file_csv, status_pembayaran
@@ -34,7 +39,11 @@ function simpanData($conn, $data, $user_id) {
         $data['status_pembayaran']
     );
 
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        return $conn->insert_id; // return ID onsite baru
+    } else {
+        return false;
+    }
 }
 
 if (isset($_POST['simpan'])) {
@@ -45,13 +54,13 @@ if (isset($_POST['simpan'])) {
     $dokumentasi = '';
     $file_csv = '';
 
-    // ✅ Upload dokumentasi (jpg/png/pdf)
+    // Upload dokumentasi
     if (!empty($_FILES['dokumentasi']['name'])) {
         $dok = $_FILES['dokumentasi'];
-        $file_ext = strtolower(pathinfo($dok['name'], PATHINFO_EXTENSION));
-        $allowed_ext = ['jpg', 'jpeg', 'png', 'pdf'];
+        $ext = strtolower(pathinfo($dok['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
 
-        if (in_array($file_ext, $allowed_ext)) {
+        if (in_array($ext, $allowed)) {
             $new_name = time() . '-' . basename($dok['name']);
             $target = $upload_dir_dok . $new_name;
             if (move_uploaded_file($dok['tmp_name'], $target)) {
@@ -60,20 +69,20 @@ if (isset($_POST['simpan'])) {
         }
     }
 
-    // ✅ Upload file CSV (hanya sebagai lampiran, tidak dibaca)
+    // Upload CSV
     if (!empty($_FILES['file_csv']['name'])) {
         $csv = $_FILES['file_csv'];
-        $file_ext = strtolower(pathinfo($csv['name'], PATHINFO_EXTENSION));
-        if ($file_ext === 'csv') {
-            $csv_name = time() . '-' . uniqid() . '-' . basename($csv['name']);
-            $csv_target = $upload_dir_csv . $csv_name;
-            if (move_uploaded_file($csv['tmp_name'], $csv_target)) {
-                $file_csv = $csv_name;
+        $ext = strtolower(pathinfo($csv['name'], PATHINFO_EXTENSION));
+        if ($ext === 'csv') {
+            $new_name = time() . '-' . uniqid() . '-' . basename($csv['name']);
+            $target = $upload_dir_csv . $new_name;
+            if (move_uploaded_file($csv['tmp_name'], $target)) {
+                $file_csv = $new_name;
             }
         }
     }
 
-    // ✅ Simpan data manual dari form
+    // Validasi input wajib
     if (!empty($_POST['tanggal']) && !empty($_POST['keterangan_kegiatan'])) {
         $data = [
             'tanggal' => $_POST['tanggal'],
@@ -88,12 +97,28 @@ if (isset($_POST['simpan'])) {
             'status_pembayaran' => $status_pembayaran
         ];
 
-        if (simpanData($conn, $data, $user_id)) {
+        // Simpan data ke tabel utama
+        $id_onsite = simpanData($conn, $data, $user_id);
+
+        if ($id_onsite) {
+            // Simpan anggota tim (jika ada)
+            if (!empty($_POST['anggota_ids']) && is_array($_POST['anggota_ids'])) {
+                $stmt = $conn->prepare("INSERT INTO tim_onsite (id_onsite, id_anggota) VALUES (?, ?)");
+
+                foreach ($_POST['anggota_ids'] as $id_anggota) {
+                    $id_anggota = (int)$id_anggota;
+                    $stmt->bind_param("ii", $id_onsite, $id_anggota);
+                    $stmt->execute();
+                }
+                $stmt->close();
+            }
+
             header("Location: user-test.php?sukses=1");
             exit();
         } else {
-            echo "❌ Gagal menyimpan data.";
+            echo "❌ Gagal menyimpan data utama.";
         }
+    } else {
+        echo "❌ Tanggal dan keterangan kegiatan wajib diisi.";
     }
 }
-?>
