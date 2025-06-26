@@ -53,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if ($is_admin) {
                         header("Location: admin/dashboard-admin.php");
                     } else {
-                        header("Location: user/dashboard-user.php");
+                        header("Location: user/dahboard-user.php");
                     }
                     exit();
                 } else {

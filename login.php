@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
             if ($bind) {
-                // Get group information
+                // 
                 $filter = "(sAMAccountName=$username)";
                 $attributes = ['memberOf'];
                 $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
@@ -50,8 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     }
 
-                    // === Integrasi dengan database lokal ===
-                    require('../include/koneksi.php'); // koneksi ke MySQL
+                    require('include/koneksi.php'); // koneksi ke MySQL
 
                     // Cek apakah user sudah ada
                     $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
@@ -75,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['role'] = $is_admin ? 'admin' : 'user';
 
                     // Redirect ke dashboard
-                    $redirect = $is_admin ? "dashboard-admin.php" : "dashboard-user.php";
+                    $redirect = $is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php";
                     header("Location: $redirect");
                     exit();
                 } else {
@@ -130,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     .card-logo {
       position: absolute;
-      top: 25px; /* semakin kecil, semakin ke atas */
+      top: 25px;
       left: 25px;
       width: 150px;
       height: auto;
@@ -268,7 +267,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
   <div class="container">
-    <!-- LOGO HANYA DI SINI -->
     <img src="asset/logo-E.png" alt="Logo" class="card-logo">
 
     <div class="welcome-section">
@@ -281,9 +279,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="login-section">
       <h2>Login</h2>
       <p>Enter your account details</p>
-
-      <!-- Alert error login jika perlu -->
-      <!-- <div class="alert">Username dan Password wajib diisi!</div> -->
 
       <form method="POST" action="">
         <div class="input-group">
@@ -303,6 +298,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 
   <script>
+    // JS untuk toggle passwod
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('password');
       const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -311,5 +307,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       this.classList.toggle('bi-eye-slash');
     });
   </script>
+
 </body>
 </html>
