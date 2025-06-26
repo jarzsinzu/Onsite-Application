@@ -204,6 +204,7 @@ $username = $_SESSION['user'];
         .table tr:hover {
             background-color: #f8f9fa;
         }
+        
     </style>
 </head>
 

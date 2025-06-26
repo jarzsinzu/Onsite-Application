@@ -65,7 +65,6 @@ $username = $_SESSION['user'];
       justify-content: space-between;
     }
 
-
     .nav-links a,
     .logout-link a {
       display: block;
@@ -74,6 +73,12 @@ $username = $_SESSION['user'];
       padding: 10px;
       border-radius: 8px;
       text-decoration: none;
+    }
+
+    .logout-link a:hover {
+      background-color: red;
+      color: white;
+      font-weight: bold;
     }
 
     .nav-links a.active,

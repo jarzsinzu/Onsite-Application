@@ -37,82 +37,76 @@ $user_id = $_SESSION['user_id'];
             height: 300px;
             border: 1px solid #ccc;
         }
+
+        .hover-bg:hover {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            font-size: 14px;
+            padding: 8px 12px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h4 class="mb-4">Form Tambah Data Onsite (Manual & CSV)</h4>
+        <h2 class="mb-4">Form Tambah Data Onsite</h2>
         <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="user_id" value="<?= $user_id ?>">
 
             <div class="mb-3">
-                <label>Tanggal</label>
-                <input type="date" name="tanggal" class="form-control">
+                <label><strong>Tanggal</strong></label>
+                <input type="date" name="tanggal" class="form-control" required>
             </div>
 
-            <!-- ✅ Tambahan: Pilih Anggota Tim -->
+            <!-- ✅ Pilih Anggota Tim -->
             <div class="mb-3">
-                <label for="anggota_ids">Pilih Anggota Tim</label>
-                <select name="anggota_ids[]" id="anggota_ids" class="form-control" multiple required>
-                    <?php
-                    require('../include/koneksi.php'); // pastikan koneksi dimuat di atas file
-                    $query = mysqli_query($conn, "SELECT id, nama FROM anggota");
-                    while ($row = mysqli_fetch_assoc($query)) {
-                        echo "<option value='{$row['id']}'>{$row['nama']}</option>";
-                    }
-                    ?>
-                </select>
-                <small class="form-text text-muted">Tekan Ctrl (Windows) atau Command (Mac) untuk memilih lebih dari satu anggota.</small>
+                <label><strong>Pilih Anggota Tim</strong></label>
+                <input type="text" id="anggota-input" class="form-control" placeholder="Ketik untuk cari anggota...">
+                <div id="anggota-list" class="mt-2 border rounded p-2" style="max-height: 150px; overflow-y: auto;"></div>
+                <div id="anggota-terpilih" class="mt-3"></div>
             </div>
 
-
-
-            <div class="mb-3">
-                <label>Latitude</label>
-                <input type="text" name="latitude" id="latitude" class="form-control" readonly>
-            </div>
-            <div class="mb-3">
-                <label>Longitude</label>
-                <input type="text" name="longitude" id="longitude" class="form-control" readonly>
-            </div>
+            <input type="hidden" name="latitude" id="latitude" class="form-control" readonly>
+            <input type="hidden" name="longitude" id="longitude" class="form-control" readonly>
 
             <div class="mb-3">
-                <label>Preview Lokasi di Google Maps</label>
-                <p id="lokasi-status">Mendeteksi lokasi...</p>
+                <label><strong>Preview Lokasi di Google Maps</strong></label><br> 
+                <small class="form-text text-muted" id="lokasi-status">Mendeteksi lokasi...</small>
                 <iframe id="mapPreview"></iframe>
             </div>
 
             <div class="mb-3">
-                <label>Keterangan Kegiatan</label>
-                <textarea name="keterangan_kegiatan" class="form-control"></textarea>
+                <label><strong>Keterangan Kegiatan</strong></label>
+                <textarea name="keterangan_kegiatan" class="form-control" required></textarea>
             </div>
             <div class="mb-3">
-                <label>Jam Mulai</label>
-                <input type="time" name="jam_mulai" class="form-control">
+                <label><strong>Jam Mulai</strong></label>
+                <input type="time" name="jam_mulai" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label>Jam Selesai</label>
-                <input type="time" name="jam_selesai" class="form-control">
+                <label><strong>Jam Selesai</strong></label>
+                <input type="time" name="jam_selesai" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label>Estimasi Biaya</label>
-                <input type="number" name="estimasi_biaya" class="form-control">
+                <label><strong>Estimasi Biaya</strong></label>
+                <input type="number" name="estimasi_biaya" class="form-control" required>
             </div>
             <div class="mb-3">
-                <label>Dokumentasi (PDF/JPG/PNG)</label>
+                <label><strong>Dokumentasi (PDF/JPG/PNG)</strong></label>
                 <input type="file" name="dokumentasi" accept=".pdf,.jpg,.jpeg,.png" class="form-control">
             </div>
 
             <div class="mb-3">
-                <label>Upload File CSV (.csv)</label>
+                <label><strong>Upload File CSV (.csv)</strong></label>
                 <input type="file" name="file_csv" accept=".csv" class="form-control">
             </div>
 
             <div class="d-flex justify-content-between">
                 <div>
                     <button type="submit" name="simpan" class="btn btn-primary">Simpan</button>
-                <a href="dashboard-user.php" class="btn btn-danger">Batal</a>
+                    <a href="dashboard-user.php" class="btn btn-danger">Batal</a>
                 </div>
                 <a href="../template/template_onsite.csv" class="btn btn-success">Download Template CSV</a>
             </div>
@@ -120,6 +114,7 @@ $user_id = $_SESSION['user_id'];
     </div>
 
     <script>
+        // Lokasi Otomatis
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError);
@@ -143,6 +138,71 @@ $user_id = $_SESSION['user_id'];
 
         document.addEventListener("DOMContentLoaded", getLocation);
     </script>
-</body>
 
+    <!-- ✅ Script Anggota Interaktif -->
+    <script>
+        const anggotaData = <?= json_encode(mysqli_fetch_all(mysqli_query($conn, "SELECT id, nama FROM anggota"), MYSQLI_ASSOC)); ?>;
+
+        const anggotaInput = document.getElementById('anggota-input');
+        const anggotaList = document.getElementById('anggota-list');
+        const anggotaTerpilih = document.getElementById('anggota-terpilih');
+
+        let selectedAnggota = [];
+
+        function renderList(filtered) {
+            anggotaList.innerHTML = '';
+            filtered.forEach(a => {
+                if (!selectedAnggota.find(item => item.id == a.id)) {
+                    const div = document.createElement('div');
+                    div.textContent = a.nama;
+                    div.className = 'p-1 anggota-item hover-bg';
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => tambahAnggota(a);
+                    anggotaList.appendChild(div);
+                }
+            });
+        }
+
+        function tambahAnggota(anggota) {
+            selectedAnggota.push(anggota);
+            updateBadge();
+            anggotaInput.value = '';
+            renderList(anggotaData);
+        }
+
+        function hapusAnggota(id) {
+            selectedAnggota = selectedAnggota.filter(a => a.id != id);
+            updateBadge();
+            renderList(anggotaData);
+        }
+
+        function updateBadge() {
+            anggotaTerpilih.innerHTML = '';
+            selectedAnggota.forEach(a => {
+                const span = document.createElement('span');
+                span.className = 'badge bg-primary me-1 mb-1';
+                span.style.cursor = 'pointer';
+                span.innerText = a.nama;
+                span.onclick = () => hapusAnggota(a.id); // Klik langsung hapus
+                anggotaTerpilih.appendChild(span);
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'anggota_ids[]';
+                hidden.value = a.id;
+                anggotaTerpilih.appendChild(hidden);
+            });
+        }
+
+        anggotaInput.addEventListener('input', () => {
+            const keyword = anggotaInput.value.toLowerCase();
+            const filtered = anggotaData.filter(a => a.nama.toLowerCase().includes(keyword));
+            renderList(filtered);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderList(anggotaData);
+        });
+    </script>
+</body>
 </html>

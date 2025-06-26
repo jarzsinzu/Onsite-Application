@@ -25,16 +25,17 @@ $query = "SELECT * $base_query $where ORDER BY id DESC LIMIT $offset, $records_p
 $result = mysqli_query($conn, $query);
 ?>
 
+
 <table class="table table-bordered align-middle table-rounded">
     <thead class="table-dark">
-        <tr>
+        <tr style="text-align: center;">
             <th style="width: 120px;">Anggota</th>
             <th style="width: 120px;">Tanggal</th>
             <th>Lokasi</th>
             <th>Detail Kegiatan</th>
             <th style="width: 120px;">Waktu</th>
-            <th>Dokumentasi</th>
-            <th>CSV</th>
+            <th><i class="bi bi-folder2 fs-5"></i></th>
+            <th><i class="bi bi-filetype-csv fs-5"></i></th>
             <th>Biaya</th>
             <th>Status</th>
         </tr>
@@ -42,7 +43,7 @@ $result = mysqli_query($conn, $query);
     <tbody>
         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
             <tr>
-                <td>
+                <td style="text-align: left;">
                     <ul style="padding-left: 15px;">
                         <?php
                         $id_onsite = $row['id'];
@@ -60,7 +61,7 @@ $result = mysqli_query($conn, $query);
                     </ul>
                 </td>
                 <td><?= htmlspecialchars($row['tanggal']) ?></td>
-                <td style="width: 240px; height: 240px;">
+                <td style="width: 180px; height: 180px;">
                     <?php if ($row['latitude'] && $row['longitude']) : ?>
                         <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
                             width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
@@ -69,7 +70,7 @@ $result = mysqli_query($conn, $query);
                     <?php endif; ?>
                 </td>
                 <td><?= htmlspecialchars($row['keterangan_kegiatan']) ?></td>
-                <td><?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
+                <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
                 <td>
                     <?php if (!empty($row['dokumentasi'])) : ?>
                         <a href="uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
@@ -86,10 +87,10 @@ $result = mysqli_query($conn, $query);
                 <td>
                     <form method="POST" action="ubah-status.php" style="display:inline-block;">
                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <select name="status_pembayaran" onchange="this.form.submit()" class="form-select form-select-sm" required>
-                            <option <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
-                            <option <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
-                            <option <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                        <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                            <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+                            <option value="Disetujui" <?=   $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+                            <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
                         </select>
                     </form>
                 </td>
@@ -122,3 +123,27 @@ $result = mysqli_query($conn, $query);
         <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
     <?php endif; ?>
 </div>
+
+<script>
+    function updateStatusColor(select) {
+        const value = select.value;
+        select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+
+        if (value === 'Disetujui') {
+            select.classList.add('bg-success', 'text-white');
+        } else if (value === 'Ditolak') {
+            select.classList.add('bg-danger', 'text-white');
+        } else if (value === 'Menunggu') {
+            select.classList.add('bg-warning');
+        }
+    }
+
+    // Inisialisasi saat halaman dimuat
+    document.querySelectorAll('.status-dropdown').forEach(select => {
+        updateStatusColor(select);
+        select.addEventListener('change', () => {
+            updateStatusColor(select);
+            // Optional: kirim ke server pakai AJAX di sini
+        });
+    });
+</script>
