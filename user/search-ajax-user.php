@@ -44,7 +44,7 @@ $result = mysqli_query($conn, $data_query);
             <th style="width: 120px;">Anggota</th>
             <th style="width: 120px;">Tanggal</th>
             <th>Lokasi</th>
-            <th>Detail Kegiatan</th>
+            <th style="width: 150px;">Detail Kegiatan</th>
             <th style="width: 120px;">Waktu</th>
             <th><i class="bi bi-folder2 fs-5"></i></th>
             <th><i class="bi bi-filetype-csv fs-5"></i></th>
