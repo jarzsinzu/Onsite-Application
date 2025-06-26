@@ -110,8 +110,11 @@ $user_id = $_SESSION['user_id'];
             </div>
 
             <div class="d-flex justify-content-between">
-                <button type="submit" name="simpan" class="btn btn-primary">Simpan</button>
-                <a href="template/template_onsite.csv" class="btn btn-success">Download Template CSV</a>
+                <div>
+                    <button type="submit" name="simpan" class="btn btn-primary">Simpan</button>
+                <a href="dashboard-user.php" class="btn btn-danger">Batal</a>
+                </div>
+                <a href="../template/template_onsite.csv" class="btn btn-success">Download Template CSV</a>
             </div>
         </form>
     </div>

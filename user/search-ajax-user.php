@@ -85,14 +85,14 @@ $result = mysqli_query($conn, $data_query);
                 <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
                 <td>
                     <?php if (!empty($row['dokumentasi'])) : ?>
-                        <a href="/onsite-app/uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
+                        <a href="../onsite-apps/uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
                     <?php else : ?>
                         Tidak ada
                     <?php endif; ?>
                 </td>
                 <td>
                     <?php if (!empty($row['file_csv'])): ?>
-                        <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">Download CSV</a>
+                        <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">CSV</a>
                     <?php endif; ?>
                 </td>
 

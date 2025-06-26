@@ -49,8 +49,8 @@ function simpanData($conn, $data, $user_id)
 if (isset($_POST['simpan'])) {
     $user_id = $_POST['user_id'];
     $status_pembayaran = 'Menunggu';
-    $upload_dir_dok = 'uploads/';
-    $upload_dir_csv = 'csv/';
+    $upload_dir_dok = '../uploads/';
+    $upload_dir_csv = '../csv/';
     $dokumentasi = '';
     $file_csv = '';
 

@@ -238,7 +238,7 @@ $username = $_SESSION['user'];
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> Karyawan</h2>
-            <a href="../user/tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a>
+            <!-- <a href="../user/tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a> -->
         </div>
 
         <div class="table-responsive" id="admin-data-container">

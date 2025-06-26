@@ -28,12 +28,13 @@ $result = mysqli_query($conn, $query);
 <table class="table table-bordered align-middle table-rounded">
     <thead class="table-dark">
         <tr>
-            <th>Anggota</th>
-            <th>Tanggal</th>
+            <th style="width: 120px;">Anggota</th>
+            <th style="width: 120px;">Tanggal</th>
             <th>Lokasi</th>
             <th>Detail Kegiatan</th>
-            <th>Waktu</th>
+            <th style="width: 120px;">Waktu</th>
             <th>Dokumentasi</th>
+            <th>CSV</th>
             <th>Biaya</th>
             <th>Status</th>
         </tr>
@@ -41,7 +42,23 @@ $result = mysqli_query($conn, $query);
     <tbody>
         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
             <tr>
-                <td>Syams<br>Fajar<br>Farza</td>
+                <td>
+                    <ul style="padding-left: 15px;">
+                        <?php
+                        $id_onsite = $row['id'];
+                        $anggota_query = "
+            SELECT a.nama 
+            FROM tim_onsite t
+            JOIN anggota a ON t.id_anggota = a.id
+            WHERE t.id_onsite = $id_onsite
+        ";
+                        $anggota_result = mysqli_query($conn, $anggota_query);
+                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                            echo "<li>" . htmlspecialchars($anggota['nama']) . "</li>";
+                        }
+                        ?>
+                    </ul>
+                </td>
                 <td><?= htmlspecialchars($row['tanggal']) ?></td>
                 <td style="width: 240px; height: 240px;">
                     <?php if ($row['latitude'] && $row['longitude']) : ?>
@@ -58,6 +75,11 @@ $result = mysqli_query($conn, $query);
                         <a href="uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
                     <?php else : ?>
                         Tidak ada
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if (!empty($row['file_csv'])): ?>
+                        <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">CSV</a>
                     <?php endif; ?>
                 </td>
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
