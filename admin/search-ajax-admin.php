@@ -81,6 +81,8 @@ $result = mysqli_query($conn, $query);
                 <td>
                     <?php if (!empty($row['file_csv'])): ?>
                         <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">CSV</a>
+                    <?php else : ?>
+                        Tidak ada
                     <?php endif; ?>
                 </td>
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>

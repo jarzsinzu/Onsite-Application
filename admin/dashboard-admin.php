@@ -423,6 +423,26 @@ $username = $_SESSION['user'];
         <?php unset($_SESSION['login_success']); ?>
     <?php endif; ?>
 
+    <?php if (isset($_SESSION['message'])): ?>
+        <script>
+            Swal.fire({
+                title: '<?= $_SESSION['message_type'] === "success" ? "Berhasil!" : "Gagal!" ?>',
+                text: '<?= addslashes($_SESSION["message"]) ?>',
+                icon: '<?= $_SESSION["message_type"] ?>',
+                background: '#1c1c1c',
+                color: '#fff',
+                iconColor: '#48cfcb',
+                confirmButtonColor: '#48cfcb',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        </script>
+        <?php
+        unset($_SESSION['message']);
+        unset($_SESSION['message_type']);
+        ?>
+    <?php endif; ?>
+
 </body>
 
 </html>
