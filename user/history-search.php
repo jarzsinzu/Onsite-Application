@@ -23,14 +23,11 @@ $total_rows = mysqli_fetch_assoc($total_result)['total'];
 $total_pages = ceil($total_rows / $limit);
 
 // Ambil data berdasarkan pencarian & halaman
-$sql = "
-  SELECT * FROM tambah_onsite 
-  WHERE user_id = $user_id 
-    AND status_pembayaran IN ('Disetujui', 'Ditolak') 
-    AND (tanggal LIKE '%$search%' OR keterangan_kegiatan LIKE '%$search%') 
-  ORDER BY id DESC 
-  LIMIT $offset, $limit
-";
+$sql = "SELECT * FROM tambah_onsite 
+        WHERE user_id = $user_id 
+        AND status_pembayaran IN ('Disetujui', 'Ditolak') 
+        ORDER BY id DESC";
+
 $result = mysqli_query($conn, $sql);
 ?>
 
@@ -51,7 +48,7 @@ $result = mysqli_query($conn, $sql);
   <tbody>
     <?php while ($row = mysqli_fetch_assoc($result)) : ?>
       <tr>
-        <td>
+        <td style="text-align: left;">
           <ul style="padding-left: 15px;">
             <?php
             $id_onsite = $row['id'];
@@ -80,7 +77,7 @@ $result = mysqli_query($conn, $sql);
         </td>
 
         <td><?= htmlspecialchars($row['keterangan_kegiatan']) ?></td>
-        <td><?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
+        <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
         <td class="text-center">
           <?php if (!empty($row['dokumentasi'])) : ?>
             <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>

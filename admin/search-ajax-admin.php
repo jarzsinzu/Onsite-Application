@@ -73,7 +73,7 @@ $result = mysqli_query($conn, $query);
                 <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
                 <td>
                     <?php if (!empty($row['dokumentasi'])) : ?>
-                        <a href="uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
+                        <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
                     <?php else : ?>
                         Tidak ada
                     <?php endif; ?>
@@ -86,13 +86,14 @@ $result = mysqli_query($conn, $query);
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
                 <td>
                     <form method="POST" action="ubah-status.php" style="display:inline-block;">
-                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-                            <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
-                            <option value="Disetujui" <?=   $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
-                            <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
-                        </select>
-                    </form>
+    <input type="hidden" name="id" value="<?= $row['id'] ?>">
+    <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+        <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+        <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+        <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+    </select>
+</form>
+
                 </td>
             </tr>
         <?php endwhile; ?>
@@ -125,25 +126,24 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script>
-    function updateStatusColor(select) {
-        const value = select.value;
-        select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+function updateStatusColor(select) {
+    const value = select.value;
+    select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
 
-        if (value === 'Disetujui') {
-            select.classList.add('bg-success', 'text-white');
-        } else if (value === 'Ditolak') {
-            select.classList.add('bg-danger', 'text-white');
-        } else if (value === 'Menunggu') {
-            select.classList.add('bg-warning');
-        }
+    if (value === 'Disetujui') {
+        select.classList.add('bg-success', 'text-white');
+    } else if (value === 'Ditolak') {
+        select.classList.add('bg-danger', 'text-white');
+    } else if (value === 'Menunggu') {
+        select.classList.add('bg-warning');
     }
+}
 
-    // Inisialisasi saat halaman dimuat
-    document.querySelectorAll('.status-dropdown').forEach(select => {
+document.querySelectorAll('.status-dropdown').forEach(select => {
+    updateStatusColor(select);
+    select.addEventListener('change', () => {
         updateStatusColor(select);
-        select.addEventListener('change', () => {
-            updateStatusColor(select);
-            // Optional: kirim ke server pakai AJAX di sini
-        });
+        select.closest('form').submit(); // ✅ Kirim form ke ubah-status.php
     });
+});
 </script>

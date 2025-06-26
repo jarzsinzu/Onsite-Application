@@ -26,9 +26,8 @@ $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
 // Query data (Hanya status Disetujui atau Ditolak)
-$data_query = "SELECT * FROM tambah_onsite 
-              WHERE user_id = $user_id 
-              AND status_pembayaran IN ('Menunggu')";
+$data_query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id AND status_pembayaran = 'Menunggu'";
+
 if (!empty($search)) {
     $data_query .= " AND (tanggal LIKE '%$search%' 
                     OR keterangan_kegiatan LIKE '%$search%' 
@@ -55,7 +54,7 @@ $result = mysqli_query($conn, $data_query);
     <tbody>
         <?php while ($row = mysqli_fetch_assoc($result)) : ?>
             <tr>
-                <td>
+                <td style="text-align: left;">
                     <ul style="padding-left: 15px;">
                         <?php
                         $id_onsite = $row['id'];
@@ -83,10 +82,10 @@ $result = mysqli_query($conn, $data_query);
                     <?php endif; ?>
                 </td>
                 <td><?= htmlspecialchars($row['keterangan_kegiatan']) ?></td>
-                <td><?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
+                <td><?= date('H:i', strtotime($row['jam_mulai'])) ?>-<?= date('H:i', strtotime($row['jam_selesai'])) ?></td>
                 <td>
                     <?php if (!empty($row['dokumentasi'])) : ?>
-                        <a href="../onsite-apps/uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
+                        <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank">Lihat</a>
                     <?php else : ?>
                         Tidak ada
                     <?php endif; ?>

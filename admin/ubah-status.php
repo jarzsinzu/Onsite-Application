@@ -2,13 +2,12 @@
 session_start();
 require('../include/koneksi.php');
 
-// Hanya admin yang boleh mengakses
+// Hanya admin
 if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
-// Validasi input
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id'] ?? 0);
     $status = trim($_POST['status_pembayaran'] ?? '');
