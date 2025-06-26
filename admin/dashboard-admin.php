@@ -22,6 +22,7 @@ $username = $_SESSION['user'];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body {
@@ -399,6 +400,28 @@ $username = $_SESSION['user'];
         };
     </script>
 
+    <?php if (isset($_SESSION['login_success'])): ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                title: 'Login Berhasil',
+                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;"><?= htmlspecialchars($username) ?></span>',
+                icon: 'success',
+                background: '#1c1c1c',
+                color: '#ffffff',
+                iconColor: '#48cfcb',
+                confirmButtonColor: '#48cfcb',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                didOpen: () => {
+                    const content = Swal.getHtmlContainer()
+                    content.style.fontSize = '16px';
+                }
+            });
+        </script>
+        <?php unset($_SESSION['login_success']); ?>
+    <?php endif; ?>
 
 </body>
 

@@ -12,11 +12,13 @@ $user_id = $_SESSION['user_id'];
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tambah Onsite - ACTIVin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             background-color: #f5f5f5;
@@ -57,6 +59,25 @@ $user_id = $_SESSION['user_id'];
 </head>
 
 <body>
+
+    <?php if (isset($_SESSION['tambah_berhasil'])): ?>
+        <script>
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Data onsite berhasil ditambahkan.',
+                icon: 'success',
+                background: '#1c1c1c',
+                color: '#fff',
+                iconColor: '#48cfcb',
+                confirmButtonColor: '#48cfcb',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        </script>
+        <?php unset($_SESSION['tambah_berhasil']); ?>
+    <?php endif; ?>
+
+
     <div class="container">
         <h2 class="mb-4">Form Tambah Data Onsite</h2>
         <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
@@ -78,7 +99,7 @@ $user_id = $_SESSION['user_id'];
             <input type="hidden" name="longitude" id="longitude" class="form-control" readonly>
 
             <div class="mb-3">
-                <label><strong>Preview Lokasi di Google Maps</strong></label><br> 
+                <label><strong>Preview Lokasi di Google Maps</strong></label><br>
                 <small class="form-text text-muted" id="lokasi-status">Mendeteksi lokasi...</small>
                 <iframe id="mapPreview"></iframe>
             </div>
@@ -222,4 +243,5 @@ $user_id = $_SESSION['user_id'];
         });
     </script>
 </body>
+
 </html>

@@ -10,75 +10,78 @@ $base_dn = "DC=training,DC=local";
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+  $username = trim($_POST['username'] ?? '');
+  $password = $_POST['password'] ?? '';
 
-    if (empty($username) || empty($password)) {
-        $message = "Username dan Password wajib diisi!";
+  if (empty($username) || empty($password)) {
+    $message = "Username dan Password wajib diisi!";
+  } else {
+    $ldap_conn = ldap_connect($ldap_server, $ldap_port);
+    if (!$ldap_conn) {
+      $message = "Gagal terhubung ke server LDAP.";
     } else {
-        $ldap_conn = ldap_connect($ldap_server, $ldap_port);
-        if (!$ldap_conn) {
-            $message = "Gagal terhubung ke server LDAP.";
-        } else {
-            ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
-            ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
+      ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+      ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
-            $ldap_user = $username . '@' . $domain;
-            $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
+      $ldap_user = $username . '@' . $domain;
+      $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
 
-            if ($bind) {
-                $filter = "(sAMAccountName=$username)";
-                $attributes = ['memberOf'];
-                $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
+      if ($bind) {
+        $filter = "(sAMAccountName=$username)";
+        $attributes = ['memberOf'];
+        $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
 
-                if ($result && ldap_count_entries($ldap_conn, $result) > 0) {
-                    $entries = ldap_get_entries($ldap_conn, $result);
-                    $groups = $entries[0]['memberof'] ?? [];
+        if ($result && ldap_count_entries($ldap_conn, $result) > 0) {
+          $entries = ldap_get_entries($ldap_conn, $result);
+          $groups = $entries[0]['memberof'] ?? [];
 
-                    $is_admin = false;
-                    foreach ($groups as $group_dn) {
-                        if (stripos($group_dn, "CN=PAM_ADMIN") !== false) {
-                            $is_admin = true;
-                            break;
-                        }
-                    }
-
-                    require('include/koneksi.php');
-                    $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
-                    mysqli_stmt_bind_param($stmt, "s", $username);
-                    mysqli_stmt_execute($stmt);
-                    $result = mysqli_stmt_get_result($stmt);
-
-                    if ($row = mysqli_fetch_assoc($result)) {
-                        $user_id = $row['id'];
-                    } else {
-                        $stmt = mysqli_prepare($conn, "INSERT INTO users (username) VALUES (?)");
-                        mysqli_stmt_bind_param($stmt, "s", $username);
-                        mysqli_stmt_execute($stmt);
-                        $user_id = mysqli_insert_id($conn);
-                    }
-
-                    $_SESSION['user'] = $username;
-                    $_SESSION['user_id'] = $user_id;
-                    $_SESSION['role'] = $is_admin ? 'admin' : 'user';
-
-                    header("Location: " . ($is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php"));
-                    exit();
-                } else {
-                    $message = "Tidak dapat menemukan informasi grup pengguna.";
-                }
-            } else {
-                $message = "Login error: Invalid credentials";
+          $is_admin = false;
+          foreach ($groups as $group_dn) {
+            if (stripos($group_dn, "CN=PAM_ADMIN") !== false) {
+              $is_admin = true;
+              break;
             }
+          }
 
-            ldap_unbind($ldap_conn);
+          require('include/koneksi.php');
+          $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
+          mysqli_stmt_bind_param($stmt, "s", $username);
+          mysqli_stmt_execute($stmt);
+          $result = mysqli_stmt_get_result($stmt);
+
+          if ($row = mysqli_fetch_assoc($result)) {
+            $user_id = $row['id'];
+          } else {
+            $stmt = mysqli_prepare($conn, "INSERT INTO users (username) VALUES (?)");
+            mysqli_stmt_bind_param($stmt, "s", $username);
+            mysqli_stmt_execute($stmt);
+            $user_id = mysqli_insert_id($conn);
+          }
+
+          $_SESSION['user'] = $username;
+          $_SESSION['user_id'] = $user_id;
+          $_SESSION['role'] = $is_admin ? 'admin' : 'user';
+          $_SESSION['login_success'] = true;
+
+
+          header("Location: " . ($is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php"));
+          exit();
+        } else {
+          $message = "Tidak dapat menemukan informasi grup pengguna.";
         }
+      } else {
+        $message = "Login error: Invalid credentials";
+      }
+
+      ldap_unbind($ldap_conn);
     }
+  }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -88,7 +91,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   <style>
     * {
-      margin: 0; padding: 0; box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: 'Inter', sans-serif;
     }
 
@@ -179,10 +184,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       padding: 10px 42px 10px 42px;
       font-size: 14px;
       border: 1px solid #f5f5f5;
+      /* ← ini border default */
       border-radius: 5px;
       background: #1c1c1c;
       color: #fff;
     }
+
+    .input-group input:focus {
+      border: 1px solid #48cfcb;
+      /* border toska saat fokus */
+      outline: none;
+      box-shadow: 0 0 0 1px #48cfcb;
+      /* glow halus */
+      transition: all 0.3s ease-in-out;
+    }
+
 
     .input-icon-left,
     .input-icon-right {
@@ -193,8 +209,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       color: #cccccc;
     }
 
-    .input-icon-left { left: 12px; pointer-events: none; }
-    .input-icon-right { right: 12px; cursor: pointer; }
+    .input-icon-left {
+      left: 12px;
+      pointer-events: none;
+    }
+
+    .input-icon-right {
+      right: 12px;
+      cursor: pointer;
+    }
 
     button {
       width: 100%;
@@ -220,6 +243,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       -webkit-text-fill-color: #fff !important;
       transition: background-color 5000s ease-in-out 0s;
     }
+
+    .custom-alert {
+      background-color: #ffe6e6;
+      color: #a94442;
+      padding: 12px 15px;
+      border: 1px solid #f5c6cb;
+      border-left: 5px solid #dc3545;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* ✅ memberi jarak antar icon dan teks */
+      animation: slideIn 0.4s ease forwards;
+    }
+
+    .alert-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      /* biar icon ga gepeng */
+      margin-top: 1px;
+      /* opsional, buat sejajar pas */
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
   </style>
 </head>
 
@@ -239,8 +298,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <p>Enter your account details</p>
 
       <?php if (!empty($message)): ?>
-        <div class="error-message"><?= htmlspecialchars($message) ?></div>
+        <div class="custom-alert">
+          <i class="bi bi-exclamation-circle-fill alert-icon"></i>
+          <span><?= htmlspecialchars($message) ?></span>
+        </div>
       <?php endif; ?>
+
+
 
       <form method="POST" action="">
         <div class="input-group">
@@ -260,7 +324,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 
   <script>
-    document.getElementById('togglePassword').addEventListener('click', function () {
+    document.getElementById('togglePassword').addEventListener('click', function() {
       const input = document.getElementById('password');
       const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
       input.setAttribute('type', type);
@@ -269,4 +333,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     });
   </script>
 </body>
+
 </html>

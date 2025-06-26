@@ -1,16 +1,19 @@
 <?php
 // Tampilkan error saat debug
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
+// Memulai session dan menghubungkan ke database
 session_start();
 require('../include/koneksi.php');
 
+// Cek apakah user sudah login, jika belum reedirect ke halaman login
 if (!isset($_SESSION['user'])) {
     header("Location: ../login.php");
     exit();
 }
 
+// Fungsi untuk menyimpan data ke database
 function simpanData($conn, $data, $user_id)
 {
     $stmt = $conn->prepare("INSERT INTO tambah_onsite (
@@ -46,6 +49,7 @@ function simpanData($conn, $data, $user_id)
     }
 }
 
+// Cek apakah form disubmit
 if (isset($_POST['simpan'])) {
     $user_id = $_POST['user_id'];
     $status_pembayaran = 'Menunggu';
@@ -82,9 +86,8 @@ if (isset($_POST['simpan'])) {
         }
     }
 
-    // Validasi input wajib
+    // Validasi input tanggal yang terlewat
     if (!empty($_POST['tanggal']) && !empty($_POST['keterangan_kegiatan'])) {
-        // 🔒 Validasi tanggal tidak boleh di masa lalu
         $tanggal = $_POST['tanggal'];
         $tanggal_input = strtotime($tanggal);
         $tanggal_sekarang = strtotime(date("Y-m-d"));
@@ -107,14 +110,12 @@ if (isset($_POST['simpan'])) {
             'status_pembayaran' => $status_pembayaran
         ];
 
-        // Simpan data ke tabel utama
+        // Simpan anggota yang dipilih
         $id_onsite = simpanData($conn, $data, $user_id);
 
         if ($id_onsite) {
-            // Simpan anggota tim
             if (!empty($_POST['anggota_ids']) && is_array($_POST['anggota_ids'])) {
                 $stmt = $conn->prepare("INSERT INTO tim_onsite (id_onsite, id_anggota) VALUES (?, ?)");
-
                 foreach ($_POST['anggota_ids'] as $id_anggota) {
                     $id_anggota = (int)$id_anggota;
                     $stmt->bind_param("ii", $id_onsite, $id_anggota);
@@ -123,7 +124,9 @@ if (isset($_POST['simpan'])) {
                 $stmt->close();
             }
 
-            header("Location: dashboard-user.php?sukses=1");
+            // Tandai berhasil dengan session
+            $_SESSION['tambah_berhasil'] = true;
+            header("Location: dashboard-user.php");
             exit();
         } else {
             echo "<script>alert('❌ Gagal menyimpan data ke database.'); window.history.back();</script>";
