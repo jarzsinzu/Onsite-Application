@@ -22,6 +22,7 @@ $username = $_SESSION['user'];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
     <style>
         body {
             display: flex;
@@ -37,6 +38,12 @@ $username = $_SESSION['user'];
             padding: 30px 20px;
             height: 100vh;
             position: fixed;
+        }
+
+        .sidebar .card-logo {
+            width: 100%;
+            height: auto;
+            margin-bottom: 28px;
         }
 
         .sidebar h2 {
@@ -204,13 +211,69 @@ $username = $_SESSION['user'];
         .table tr:hover {
             background-color: #f8f9fa;
         }
-        
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            background: #fff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            background: #fff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- ALERT MODAL -->
+    <div id="customAlert" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h5>Konfirmasi</h5>
+            <p>Apakah Anda yakin ingin mengubah status data ini?</p>
+            <div class="text-end mt-3">
+                <button id="cancelBtn" class="btn btn-secondary me-2">Batal</button>
+                <button id="confirmBtn" class="btn btn-primary">Ya, Ubah</button>
+            </div>
+        </div>
+    </div>
+
     <div class="sidebar">
-        <h2>ACTIV<span style="color: #48cfcb;">in</span></h2>
+        <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
         <div class="nav-container">
             <div class="nav-links">
                 <a href="dashboard-admin.php" class="<?= $current_page == 'dashboard-admin.php' ? 'active' : '' ?>">
@@ -224,7 +287,7 @@ $username = $_SESSION['user'];
     </div>
 
     <div class="main">
-        <form class="search-bar" method="post">
+        <form onsubmit="return false;" class="search-bar" method="post">
             <div class="topbar">
                 <div class="input-with-icon">
                     <input type="text" placeholder="Cari onsite..." name="search" id="search-input-admin" autocomplete="off">
@@ -242,40 +305,101 @@ $username = $_SESSION['user'];
             <!-- <a href="../user/tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a> -->
         </div>
 
-        <div class="table-responsive" id="admin-data-container">
-            <?php include 'search-ajax-admin.php'; ?>
-        </div>
+        <div class="table-responsive" id="admin-data-container"></div>
     </div>
 
-    <script>
-        function loadAdminPage(page) {
-            const keyword = document.getElementById("search-input-admin").value;
-            const formData = new FormData();
-            formData.append("search", keyword);
-            formData.append("page", page);
 
-            fetch("search-ajax-admin.php", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("admin-data-container").innerHTML = html;
+    <script>
+        let selectedFormToSubmit = null;
+
+        function setupStatusDropdowns() {
+            document.querySelectorAll('.status-dropdown').forEach(select => {
+                updateStatusColor(select);
+                select.addEventListener('change', () => {
+                    selectedFormToSubmit = select.closest('form');
+                    document.getElementById('customAlert').style.display = 'flex';
                 });
+            });
         }
 
-        document.getElementById("search-input-admin").addEventListener("input", function() {
-            loadAdminPage(1);
+        document.getElementById('cancelBtn').onclick = () => {
+            document.getElementById('customAlert').style.display = 'none';
+            location.reload(); // reset dropdown ke semula
+        };
+
+        document.getElementById('confirmBtn').onclick = () => {
+            if (selectedFormToSubmit) {
+                selectedFormToSubmit.submit();
+            }
+        };
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function updateStatusColor(select) {
+            const value = select.value;
+            select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+            if (value === 'Disetujui') select.classList.add('bg-success', 'text-white');
+            else if (value === 'Ditolak') select.classList.add('bg-danger', 'text-white');
+            else if (value === 'Menunggu') select.classList.add('bg-warning');
+        }
+
+        function setupStatusDropdowns() {
+            document.querySelectorAll('.status-dropdown').forEach(select => {
+                updateStatusColor(select);
+
+                // Hapus listener sebelumnya dulu (opsional tapi aman)
+                const cloned = select.cloneNode(true);
+                select.parentNode.replaceChild(cloned, select);
+
+                cloned.addEventListener('change', (event) => {
+                    event.preventDefault(); // ⛔ Cegah form submit otomatis
+
+                    selectedFormToSubmit = cloned.closest('form');
+                    document.getElementById('customAlert').style.display = 'flex';
+                });
+            });
+        }
+
+
+        function loadData(search = '', page = 1) {
+            $.post('search-ajax-admin.php', {
+                search: search,
+                page: page
+            }, function(res) {
+                $('#admin-data-container').html(res);
+                setupStatusDropdowns(); // <== penting!
+            });
+        }
+
+        $(document).ready(function() {
+            loadData();
+
+            $('#search-input-admin').on('input', function() {
+                const keyword = $(this).val();
+                loadData(keyword);
+            });
+
+            $(document).on('click', '.pagination-link', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                const keyword = $('#search-input-admin').val();
+                loadData(keyword, page);
+            });
         });
 
-        document.addEventListener("click", function(e) {
-            if (e.target.classList.contains("pagination-link")) {
-                e.preventDefault();
-                const page = e.target.getAttribute("data-page");
-                loadAdminPage(page);
+        document.getElementById('cancelBtn').onclick = () => {
+            document.getElementById('customAlert').style.display = 'none';
+            location.reload();
+        };
+
+        document.getElementById('confirmBtn').onclick = () => {
+            if (selectedFormToSubmit) {
+                selectedFormToSubmit.submit();
             }
-        });
+        };
     </script>
+
+
 </body>
 
 </html>

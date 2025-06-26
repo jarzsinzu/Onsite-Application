@@ -8,31 +8,25 @@ $domain = "training.local";
 $base_dn = "DC=training,DC=local";
 
 $message = "";
-$message_type = "";
 
-// Handle login form
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if (empty($username) || empty($password)) {
         $message = "Username dan Password wajib diisi!";
-        $message_type = "danger";
     } else {
         $ldap_conn = ldap_connect($ldap_server, $ldap_port);
-
         if (!$ldap_conn) {
             $message = "Gagal terhubung ke server LDAP.";
-            $message_type = "danger";
         } else {
             ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
             ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
             $ldap_user = $username . '@' . $domain;
-
             $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
+
             if ($bind) {
-                // 
                 $filter = "(sAMAccountName=$username)";
                 $attributes = ['memberOf'];
                 $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
@@ -42,7 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $groups = $entries[0]['memberof'] ?? [];
 
                     $is_admin = false;
-
                     foreach ($groups as $group_dn) {
                         if (stripos($group_dn, "CN=PAM_ADMIN") !== false) {
                             $is_admin = true;
@@ -50,9 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     }
 
-                    require('include/koneksi.php'); // koneksi ke MySQL
-
-                    // Cek apakah user sudah ada
+                    require('include/koneksi.php');
                     $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
                     mysqli_stmt_bind_param($stmt, "s", $username);
                     mysqli_stmt_execute($stmt);
@@ -61,29 +52,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if ($row = mysqli_fetch_assoc($result)) {
                         $user_id = $row['id'];
                     } else {
-                        // Insert user baru
                         $stmt = mysqli_prepare($conn, "INSERT INTO users (username) VALUES (?)");
                         mysqli_stmt_bind_param($stmt, "s", $username);
                         mysqli_stmt_execute($stmt);
                         $user_id = mysqli_insert_id($conn);
                     }
 
-                    // Set session
                     $_SESSION['user'] = $username;
                     $_SESSION['user_id'] = $user_id;
                     $_SESSION['role'] = $is_admin ? 'admin' : 'user';
 
-                    // Redirect ke dashboard
-                    $redirect = $is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php";
-                    header("Location: $redirect");
+                    header("Location: " . ($is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php"));
                     exit();
                 } else {
                     $message = "Tidak dapat menemukan informasi grup pengguna.";
-                    $message_type = "danger";
                 }
             } else {
-                $message = "Login error: " . ldap_error($ldap_conn);
-                $message_type = "danger";
+                $message = "Login error: Invalid credentials";
             }
 
             ldap_unbind($ldap_conn);
@@ -93,18 +78,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login ACTIVin Account</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0; padding: 0; box-sizing: border-box;
       font-family: 'Inter', sans-serif;
     }
 
@@ -137,14 +121,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     .welcome-section {
-      position: relative;
       flex: 1;
-      background-color: #1e1e1e;
-      background-image: url('asset/test.png');
-      background-size: cover;
-      background-position: bottom;
-      background-repeat: no-repeat;
-
+      background: url('asset/test.png') no-repeat bottom / cover;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -184,25 +162,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       font-size: 14px;
     }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #48cfcb;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #227779;
-    }
-
-    .input-group input:focus {
-      border: 1px solid #48cfcb;
-      outline: none;
+    .error-message {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 15px;
     }
 
     .input-group {
@@ -228,39 +191,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       transform: translateY(-50%);
       font-size: 20px;
       color: #cccccc;
-      height: 20px;
-      width: 20px;
     }
 
-    .input-icon-left {
-      left: 12px;
-      pointer-events: none;
-    }
+    .input-icon-left { left: 12px; pointer-events: none; }
+    .input-icon-right { right: 12px; cursor: pointer; }
 
-    .input-icon-right {
-      right: 12px;
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #48cfcb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s;
     }
 
-    input:-webkit-autofill {
+    button:hover {
+      background: #227779;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
       -webkit-box-shadow: 0 0 0 1000px #1c1c1c inset !important;
       -webkit-text-fill-color: #fff !important;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      font-size: 18px;
-      color: #cccccc;
-    }
-
-    .alert {
-      color: red;
-      font-size: 14px;
-      margin-bottom: 10px;
+      transition: background-color 5000s ease-in-out 0s;
     }
   </style>
 </head>
@@ -280,15 +238,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <h2>Login</h2>
       <p>Enter your account details</p>
 
+      <?php if (!empty($message)): ?>
+        <div class="error-message"><?= htmlspecialchars($message) ?></div>
+      <?php endif; ?>
+
       <form method="POST" action="">
         <div class="input-group">
           <i class="bi bi-person input-icon-left"></i>
-          <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required />
+          <input type="text" name="username" placeholder="Username" autocomplete="username" />
         </div>
 
         <div class="input-group">
           <i class="bi bi-key input-icon-left"></i>
-          <input type="password" id="password" name="password" placeholder="Password" />
+          <input type="password" name="password" id="password" placeholder="Password" />
           <i class="bi bi-eye-slash input-icon-right toggle-password" id="togglePassword"></i>
         </div>
 
@@ -298,15 +260,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 
   <script>
-    // JS untuk toggle passwod
     document.getElementById('togglePassword').addEventListener('click', function () {
-      const passwordInput = document.getElementById('password');
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
+      const input = document.getElementById('password');
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
       this.classList.toggle('bi-eye');
       this.classList.toggle('bi-eye-slash');
     });
   </script>
-
 </body>
 </html>

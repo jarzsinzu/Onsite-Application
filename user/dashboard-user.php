@@ -52,6 +52,12 @@ $result = mysqli_query($conn, $query);
             position: fixed;
         }
 
+        .sidebar .card-logo {
+            width: 100%;
+            height: auto;
+            margin-bottom: 28px;
+        }
+
         .sidebar h2 {
             font-size: 25px;
             font-weight: bold;
@@ -231,14 +237,14 @@ $result = mysqli_query($conn, $query);
 
 <body>
     <div class="sidebar">
-        <h2>ACTIV<span style="color: #48cfcb;">in</span></h2>
+        <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
         <div class="nav-container">
             <div class="nav-links">
                 <a href="dashboard-user.php" class="<?= $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
                     <i class="bi bi-columns-gap"></i> Dashboard
                 </a>
                 <a href="history.php" class="<?= $current_page == 'history.php' ? 'active' : '' ?>">
-                    <i class="bi bi-clock-history"></i> History Onsite
+                    <i class="bi bi-clock-history"></i> History
                 </a>
             </div>
             <div class="logout-link">

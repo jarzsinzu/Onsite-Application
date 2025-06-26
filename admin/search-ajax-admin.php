@@ -16,7 +16,7 @@ if (!empty($search)) {
            OR status_pembayaran LIKE '%$search%'";
 }
 
-$count_query = "SELECT COUNT(*) as total $base_quer y$where";
+$count_query = "SELECT COUNT(*) as total $base_query $where";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
@@ -146,4 +146,8 @@ $result = mysqli_query($conn, $query);
             select.closest('form').submit(); // ✅ Kirim form ke ubah-status.php
         });
     });
+
+    if (typeof setupStatusDropdowns === 'function') {
+        setupStatusDropdowns(); // Aktifkan ulang event listener dropdown setelah tabel dimuat
+    }
 </script>
