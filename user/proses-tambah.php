@@ -1,5 +1,5 @@
 <?php
-// Tampilkan error (penting saat debug)
+// Tampilkan error saat debug
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -40,7 +40,7 @@ function simpanData($conn, $data, $user_id)
     );
 
     if ($stmt->execute()) {
-        return $conn->insert_id; // return ID onsite baru
+        return $conn->insert_id;
     } else {
         return false;
     }
@@ -84,8 +84,18 @@ if (isset($_POST['simpan'])) {
 
     // Validasi input wajib
     if (!empty($_POST['tanggal']) && !empty($_POST['keterangan_kegiatan'])) {
+        // 🔒 Validasi tanggal tidak boleh di masa lalu
+        $tanggal = $_POST['tanggal'];
+        $tanggal_input = strtotime($tanggal);
+        $tanggal_sekarang = strtotime(date("Y-m-d"));
+
+        if ($tanggal_input < $tanggal_sekarang) {
+            echo "<script>alert('❌ Tanggal tidak boleh di masa lalu.'); window.history.back();</script>";
+            exit();
+        }
+
         $data = [
-            'tanggal' => $_POST['tanggal'],
+            'tanggal' => $tanggal,
             'latitude' => $_POST['latitude'],
             'longitude' => $_POST['longitude'],
             'keterangan_kegiatan' => $_POST['keterangan_kegiatan'],
@@ -101,7 +111,7 @@ if (isset($_POST['simpan'])) {
         $id_onsite = simpanData($conn, $data, $user_id);
 
         if ($id_onsite) {
-            // Simpan anggota tim (jika ada)
+            // Simpan anggota tim
             if (!empty($_POST['anggota_ids']) && is_array($_POST['anggota_ids'])) {
                 $stmt = $conn->prepare("INSERT INTO tim_onsite (id_onsite, id_anggota) VALUES (?, ?)");
 
@@ -116,9 +126,9 @@ if (isset($_POST['simpan'])) {
             header("Location: dashboard-user.php?sukses=1");
             exit();
         } else {
-            echo "❌ Gagal menyimpan data utama.";
+            echo "<script>alert('❌ Gagal menyimpan data ke database.'); window.history.back();</script>";
         }
     } else {
-        echo "❌ Tanggal dan keterangan kegiatan wajib diisi.";
+        echo "<script>alert('❌ Tanggal dan keterangan kegiatan wajib diisi.'); window.history.back();</script>";
     }
 }

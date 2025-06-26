@@ -15,7 +15,7 @@ $search = mysqli_real_escape_string($conn, $search);
 // Hitung total data (Hanya status Disetujui atau Ditolak)
 $count_query = "SELECT COUNT(*) as total FROM tambah_onsite 
                 WHERE user_id = $user_id 
-                AND status_pembayaran IN ('Disetujui', 'Ditolak')";
+                AND status_pembayaran = 'Menunggu'";
 if (!empty($search)) {
     $count_query .= " AND (tanggal LIKE '%$search%' 
                     OR keterangan_kegiatan LIKE '%$search%' 
@@ -36,6 +36,7 @@ if (!empty($search)) {
 $data_query .= " ORDER BY id DESC LIMIT $offset, $records_per_page";
 $result = mysqli_query($conn, $data_query);
 ?>
+
 
 <table class="table table-bordered align-middle table-rounded">
     <thead class="table-dark">
@@ -93,6 +94,8 @@ $result = mysqli_query($conn, $data_query);
                 <td>
                     <?php if (!empty($row['file_csv'])): ?>
                         <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>">CSV</a>
+                    <?php else : ?>
+                        Tidak ada
                     <?php endif; ?>
                 </td>
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>

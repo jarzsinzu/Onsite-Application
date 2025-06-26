@@ -25,8 +25,10 @@ $total_pages = ceil($total_rows / $limit);
 // Ambil data berdasarkan pencarian & halaman
 $sql = "SELECT * FROM tambah_onsite 
         WHERE user_id = $user_id 
-        AND status_pembayaran IN ('Disetujui', 'Ditolak') 
-        ORDER BY id DESC";
+        AND status_pembayaran IN ('Disetujui', 'Ditolak')
+        AND (tanggal LIKE '%$search%' OR keterangan_kegiatan LIKE '%$search%')
+        ORDER BY id DESC 
+        LIMIT $offset, $limit";
 
 $result = mysqli_query($conn, $sql);
 ?>
@@ -69,7 +71,7 @@ $result = mysqli_query($conn, $sql);
         <td style="width: 180px; height: 180px;">
           <?php if ($row['latitude'] && $row['longitude']) : ?>
             <iframe
-              src="https://maps.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=es&z=14&output=embed"
+              src="https://maps.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=14&output=embed"
               width="100%" height="100%" style="border:0;" allowfullscreen loading="lazy"></iframe>
           <?php else : ?>
             Tidak tersedia

@@ -16,7 +16,7 @@ if (!empty($search)) {
            OR status_pembayaran LIKE '%$search%'";
 }
 
-$count_query = "SELECT COUNT(*) as total $base_query $where";
+$count_query = "SELECT COUNT(*) as total $base_quer y$where";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
@@ -86,13 +86,13 @@ $result = mysqli_query($conn, $query);
                 <td style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></td>
                 <td>
                     <form method="POST" action="ubah-status.php" style="display:inline-block;">
-    <input type="hidden" name="id" value="<?= $row['id'] ?>">
-    <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-        <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
-        <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
-        <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
-    </select>
-</form>
+                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                        <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                            <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+                            <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+                            <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                        </select>
+                    </form>
 
                 </td>
             </tr>
@@ -126,24 +126,24 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script>
-function updateStatusColor(select) {
-    const value = select.value;
-    select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+    function updateStatusColor(select) {
+        const value = select.value;
+        select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
 
-    if (value === 'Disetujui') {
-        select.classList.add('bg-success', 'text-white');
-    } else if (value === 'Ditolak') {
-        select.classList.add('bg-danger', 'text-white');
-    } else if (value === 'Menunggu') {
-        select.classList.add('bg-warning');
+        if (value === 'Disetujui') {
+            select.classList.add('bg-success', 'text-white');
+        } else if (value === 'Ditolak') {
+            select.classList.add('bg-danger', 'text-white');
+        } else if (value === 'Menunggu') {
+            select.classList.add('bg-warning');
+        }
     }
-}
 
-document.querySelectorAll('.status-dropdown').forEach(select => {
-    updateStatusColor(select);
-    select.addEventListener('change', () => {
+    document.querySelectorAll('.status-dropdown').forEach(select => {
         updateStatusColor(select);
-        select.closest('form').submit(); // ✅ Kirim form ke ubah-status.php
+        select.addEventListener('change', () => {
+            updateStatusColor(select);
+            select.closest('form').submit(); // ✅ Kirim form ke ubah-status.php
+        });
     });
-});
 </script>

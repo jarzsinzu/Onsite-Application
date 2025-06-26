@@ -12,7 +12,6 @@ $user_id = $_SESSION['user_id'];
 
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -42,9 +41,17 @@ $user_id = $_SESSION['user_id'];
             background-color: #f8f9fa;
         }
 
-        .badge {
-            font-size: 14px;
+        .badge-custom {
+            background-color: #48cfcb;
+            color: white;
             padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 10px;
+        }
+
+        .badge-custom:hover {
+            background-color: #3cbdb9;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -57,10 +64,9 @@ $user_id = $_SESSION['user_id'];
 
             <div class="mb-3">
                 <label><strong>Tanggal</strong></label>
-                <input type="date" name="tanggal" class="form-control" required>
+                <input type="date" name="tanggal" id="tanggal" class="form-control" required>
             </div>
 
-            <!-- ✅ Pilih Anggota Tim -->
             <div class="mb-3">
                 <label><strong>Pilih Anggota Tim</strong></label>
                 <input type="text" id="anggota-input" class="form-control" placeholder="Ketik untuk cari anggota...">
@@ -81,18 +87,22 @@ $user_id = $_SESSION['user_id'];
                 <label><strong>Keterangan Kegiatan</strong></label>
                 <textarea name="keterangan_kegiatan" class="form-control" required></textarea>
             </div>
+
             <div class="mb-3">
                 <label><strong>Jam Mulai</strong></label>
                 <input type="time" name="jam_mulai" class="form-control" required>
             </div>
+
             <div class="mb-3">
                 <label><strong>Jam Selesai</strong></label>
                 <input type="time" name="jam_selesai" class="form-control" required>
             </div>
+
             <div class="mb-3">
                 <label><strong>Estimasi Biaya</strong></label>
                 <input type="number" name="estimasi_biaya" class="form-control" required>
             </div>
+
             <div class="mb-3">
                 <label><strong>Dokumentasi (PDF/JPG/PNG)</strong></label>
                 <input type="file" name="dokumentasi" accept=".pdf,.jpg,.jpeg,.png" class="form-control">
@@ -105,7 +115,7 @@ $user_id = $_SESSION['user_id'];
 
             <div class="d-flex justify-content-between">
                 <div>
-                    <button type="submit" name="simpan" class="btn btn-primary">Simpan</button>
+                    <button type="submit" name="simpan" class="btn btn-info" style="color: #fff;">Simpan</button>
                     <a href="dashboard-user.php" class="btn btn-danger">Batal</a>
                 </div>
                 <a href="../template/template_onsite.csv" class="btn btn-success">Download Template CSV</a>
@@ -114,7 +124,14 @@ $user_id = $_SESSION['user_id'];
     </div>
 
     <script>
-        // Lokasi Otomatis
+        // ✅ Validasi tanggal tidak boleh di masa lalu
+        document.addEventListener("DOMContentLoaded", () => {
+            const tanggalInput = document.getElementById("tanggal");
+            const today = new Date().toISOString().split('T')[0];
+            tanggalInput.setAttribute("min", today);
+        });
+
+        // ✅ Lokasi otomatis
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError);
@@ -139,7 +156,7 @@ $user_id = $_SESSION['user_id'];
         document.addEventListener("DOMContentLoaded", getLocation);
     </script>
 
-    <!-- ✅ Script Anggota Interaktif -->
+    <!-- ✅ Script interaktif anggota -->
     <script>
         const anggotaData = <?= json_encode(mysqli_fetch_all(mysqli_query($conn, "SELECT id, nama FROM anggota"), MYSQLI_ASSOC)); ?>;
 
@@ -180,16 +197,16 @@ $user_id = $_SESSION['user_id'];
             anggotaTerpilih.innerHTML = '';
             selectedAnggota.forEach(a => {
                 const span = document.createElement('span');
-                span.className = 'badge bg-primary me-1 mb-1';
-                span.style.cursor = 'pointer';
+                span.className = 'badge badge-custom me-1 mb-1';
                 span.innerText = a.nama;
-                span.onclick = () => hapusAnggota(a.id); // Klik langsung hapus
-                anggotaTerpilih.appendChild(span);
+                span.onclick = () => hapusAnggota(a.id);
 
                 const hidden = document.createElement('input');
                 hidden.type = 'hidden';
                 hidden.name = 'anggota_ids[]';
                 hidden.value = a.id;
+
+                anggotaTerpilih.appendChild(span);
                 anggotaTerpilih.appendChild(hidden);
             });
         }
