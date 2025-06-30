@@ -1,13 +1,8 @@
 <?php
-// Tampilkan error saat debug
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
 
-// Memulai session dan menghubungkan ke database
 session_start();
 require('../include/koneksi.php');
 
-// Cek apakah user sudah login, jika belum reedirect ke halaman login
 if (!isset($_SESSION['user'])) {
     header("Location: ../login.php");
     exit();
@@ -16,6 +11,7 @@ if (!isset($_SESSION['user'])) {
 // Fungsi untuk menyimpan data ke database
 function simpanData($conn, $data, $user_id)
 {
+    // Query insert
     $stmt = $conn->prepare("INSERT INTO tambah_onsite (
         user_id, tanggal, latitude, longitude, keterangan_kegiatan,
         jam_mulai, jam_selesai, estimasi_biaya, dokumentasi, file_csv, status_pembayaran
@@ -27,6 +23,7 @@ function simpanData($conn, $data, $user_id)
 
     $estimasi_biaya = (float)$data['estimasi_biaya'];
 
+    // Mengisi nilai ke ? dalam query
     $stmt->bind_param(
         "sssssssdsss",
         $user_id,
@@ -93,7 +90,7 @@ if (isset($_POST['simpan'])) {
         $tanggal_sekarang = strtotime(date("Y-m-d"));
 
         if ($tanggal_input < $tanggal_sekarang) {
-            echo "<script>alert('❌ Tanggal tidak boleh di masa lalu.'); window.history.back();</script>";
+            echo "<script>alert('Tanggal tidak boleh di masa lalu!'); window.history.back();</script>";
             exit();
         }
 
@@ -129,9 +126,9 @@ if (isset($_POST['simpan'])) {
             header("Location: dashboard-user.php");
             exit();
         } else {
-            echo "<script>alert('❌ Gagal menyimpan data ke database.'); window.history.back();</script>";
+            echo "<script>alert('Gagal menyimpan data ke database.'); window.history.back();</script>";
         }
     } else {
-        echo "<script>alert('❌ Tanggal dan keterangan kegiatan wajib diisi.'); window.history.back();</script>";
+        echo "<script>alert('Tanggal dan keterangan kegiatan wajib diisi.'); window.history.back();</script>";
     }
 }

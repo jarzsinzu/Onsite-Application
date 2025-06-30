@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require('../include/koneksi.php');
 
+// Mengambil data dari session dan POST
 $user_id = $_SESSION['user_id'] ?? 0;
 $search = $_POST['search'] ?? '';
 $page = $_POST['page'] ?? 1;
@@ -12,7 +13,7 @@ $offset = ($page - 1) * $records_per_page;
 
 $search = mysqli_real_escape_string($conn, $search);
 
-// Hitung total data (Hanya status Disetujui atau Ditolak)
+// Menghitung total data untuk pagination
 $count_query = "SELECT COUNT(*) as total FROM tambah_onsite 
                 WHERE user_id = $user_id 
                 AND status_pembayaran = 'Menunggu'";
@@ -25,7 +26,7 @@ $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
-// Query data (Hanya status Disetujui atau Ditolak)
+// Query ambil data sesuai filter dan halaman
 $data_query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id AND status_pembayaran = 'Menunggu'";
 
 if (!empty($search)) {
@@ -116,14 +117,14 @@ $result = mysqli_query($conn, $data_query);
 <!-- Pagination -->
 <div class="pagination">
     <?php if ($total_pages > 1): ?>
-        <!-- First Page -->
+        <!-- Halaman pertama -->
         <?php if ($page > 1): ?>
             <a href="#" class="pagination-link" data-page="1">&laquo;</a>
         <?php else: ?>
             <span class="disabled">&laquo;</span>
         <?php endif; ?>
 
-        <!-- Page Numbers -->
+        <!-- Menentukan rentang halaman -->
         <?php
         $range = 2;
         $start = max(1, $page - $range);
@@ -145,7 +146,7 @@ $result = mysqli_query($conn, $data_query);
         }
         ?>
 
-        <!-- Last Page -->
+        <!-- Halaman terakhir -->
         <?php if ($page < $total_pages): ?>
             <a href="#" class="pagination-link" data-page="<?= $total_pages ?>">&raquo;</a>
         <?php else: ?>

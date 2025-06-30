@@ -12,5 +12,5 @@ if (!empty($filename) && file_exists($filepath)) {
     readfile($filepath);
     exit;
 } else {
-    echo "❌ File tidak ditemukan.";
+    echo "File tidak ditemukan.";
 }

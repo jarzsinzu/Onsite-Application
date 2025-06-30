@@ -9,6 +9,7 @@ $base_dn = "DC=training,DC=local";
 
 $message = "";
 
+// Mengecek apakah request adalah POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $username = trim($_POST['username'] ?? '');
   $password = $_POST['password'] ?? '';
@@ -16,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   if (empty($username) || empty($password)) {
     $message = "Username dan Password wajib diisi!";
   } else {
-    $ldap_conn = ldap_connect($ldap_server, $ldap_port);
+    $ldap_conn = ldap_connect($ldap_server, $ldap_port); // Menghubungkan ke server LDAP
     if (!$ldap_conn) {
       $message = "Gagal terhubung ke server LDAP.";
     } else {
@@ -26,6 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $ldap_user = $username . '@' . $domain;
       $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
 
+      // Mencari data user di LDAP dan cek grup
       if ($bind) {
         $filter = "(sAMAccountName=$username)";
         $attributes = ['memberOf'];
@@ -43,6 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
           }
 
+          // Mengecek apakah user sudah ada di tabel user berdasarkan username
           require('include/koneksi.php');
           $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
           mysqli_stmt_bind_param($stmt, "s", $username);
@@ -58,12 +61,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $user_id = mysqli_insert_id($conn);
           }
 
+          // Menyimpan data login ke session
           $_SESSION['user'] = $username;
           $_SESSION['user_id'] = $user_id;
           $_SESSION['role'] = $is_admin ? 'admin' : 'user';
           $_SESSION['login_success'] = true;
 
-
+          // Redirect sesuai role user/admin
           header("Location: " . ($is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php"));
           exit();
         } else {
@@ -184,7 +188,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       padding: 10px 42px 10px 42px;
       font-size: 14px;
       border: 1px solid #f5f5f5;
-      /* ← ini border default */
       border-radius: 5px;
       background: #1c1c1c;
       color: #fff;
@@ -192,10 +195,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     .input-group input:focus {
       border: 1px solid #48cfcb;
-      /* border toska saat fokus */
       outline: none;
       box-shadow: 0 0 0 1px #48cfcb;
-      /* glow halus */
       transition: all 0.3s ease-in-out;
     }
 
@@ -256,16 +257,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       display: flex;
       align-items: center;
       gap: 10px;
-      /* ✅ memberi jarak antar icon dan teks */
       animation: slideIn 0.4s ease forwards;
     }
 
     .alert-icon {
       font-size: 18px;
       flex-shrink: 0;
-      /* biar icon ga gepeng */
       margin-top: 1px;
-      /* opsional, buat sejajar pas */
     }
 
     @keyframes slideIn {
@@ -304,8 +302,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
       <?php endif; ?>
 
-
-
       <form method="POST" action="">
         <div class="input-group">
           <i class="bi bi-person input-icon-left"></i>
@@ -324,6 +320,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 
   <script>
+    // Mengatur toggle password (menampilkan/menyembunyikan password)
     document.getElementById('togglePassword').addEventListener('click', function() {
       const input = document.getElementById('password');
       const type = input.getAttribute('type') === 'password' ? 'text' : 'password';

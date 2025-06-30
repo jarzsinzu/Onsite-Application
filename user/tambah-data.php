@@ -59,25 +59,6 @@ $user_id = $_SESSION['user_id'];
 </head>
 
 <body>
-
-    <?php if (isset($_SESSION['tambah_berhasil'])): ?>
-        <script>
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Data onsite berhasil ditambahkan.',
-                icon: 'success',
-                background: '#1c1c1c',
-                color: '#fff',
-                iconColor: '#48cfcb',
-                confirmButtonColor: '#48cfcb',
-                timer: 2500,
-                showConfirmButton: false
-            });
-        </script>
-        <?php unset($_SESSION['tambah_berhasil']); ?>
-    <?php endif; ?>
-
-
     <div class="container">
         <h2 class="mb-4">Form Tambah Data Onsite</h2>
         <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
@@ -145,14 +126,14 @@ $user_id = $_SESSION['user_id'];
     </div>
 
     <script>
-        // ✅ Validasi tanggal tidak boleh di masa lalu
+        // Validasi tanggal tidak boleh di masa lalu
         document.addEventListener("DOMContentLoaded", () => {
             const tanggalInput = document.getElementById("tanggal");
             const today = new Date().toISOString().split('T')[0];
             tanggalInput.setAttribute("min", today);
         });
 
-        // ✅ Lokasi otomatis
+        // Mendeteksi lokasi user secara otomatis
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError, {
@@ -165,6 +146,7 @@ $user_id = $_SESSION['user_id'];
             }
         }
 
+        // Menampilkan lokasi di google maps dan menyimpannya ke input
         function showPosition(pos) {
             let lat = pos.coords.latitude;
             let lon = pos.coords.longitude;
@@ -182,19 +164,19 @@ $user_id = $_SESSION['user_id'];
             document.getElementById("lokasi-status").textContent = "Gagal mendeteksi lokasi.";
         }
 
-        document.addEventListener("DOMContentLoaded", getLocation);
-    </script>
+        document.addEventListener("DOMContentLoaded", getLocation); // Otomatis menjalankan deteksi lokasi saat halaman dibuka
 
-    <!-- ✅ Script interaktif anggota -->
-    <script>
+        // Mengabmbil data anggota dari database
         const anggotaData = <?= json_encode(mysqli_fetch_all(mysqli_query($conn, "SELECT id, nama FROM anggota"), MYSQLI_ASSOC)); ?>;
 
+        // Mengambil class dari html untuk pencarian anggota
         const anggotaInput = document.getElementById('anggota-input');
         const anggotaList = document.getElementById('anggota-list');
         const anggotaTerpilih = document.getElementById('anggota-terpilih');
 
         let selectedAnggota = [];
 
+        // Menampilkan list filter hasil pencarian 
         function renderList(filtered) {
             anggotaList.innerHTML = '';
             filtered.forEach(a => {
@@ -209,6 +191,7 @@ $user_id = $_SESSION['user_id'];
             });
         }
 
+        // Menambahkan anggota ke daftar terpilih 
         function tambahAnggota(anggota) {
             selectedAnggota.push(anggota);
             updateBadge();
@@ -216,12 +199,14 @@ $user_id = $_SESSION['user_id'];
             renderList(anggotaData);
         }
 
+        // Untuk menghapus anggota dari daftar terpilih
         function hapusAnggota(id) {
             selectedAnggota = selectedAnggota.filter(a => a.id != id);
             updateBadge();
             renderList(anggotaData);
         }
 
+        // Memperbarui badge untuk anggota terpilih
         function updateBadge() {
             anggotaTerpilih.innerHTML = '';
             selectedAnggota.forEach(a => {
@@ -240,6 +225,7 @@ $user_id = $_SESSION['user_id'];
             });
         }
 
+        // Live search
         anggotaInput.addEventListener('input', () => {
             const keyword = anggotaInput.value.toLowerCase();
             const filtered = anggotaData.filter(a => a.nama.toLowerCase().includes(keyword));

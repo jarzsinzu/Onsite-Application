@@ -7,6 +7,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Pagination
 $current_page = basename($_SERVER['PHP_SELF']);
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $records_per_page = 5;
@@ -15,11 +16,13 @@ $offset = ($page - 1) * $records_per_page;
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['user'];
 
+// Menghitung jumlah data onsite user
 $count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
+// Mengambil data onsite sesuai halaman
 $query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
 $result = mysqli_query($conn, $query);
 ?>
@@ -279,7 +282,9 @@ $result = mysqli_query($conn, $query);
     </div>
 
     <script>
-        // Search & Pagination
+        // Pagination & search realtime
+
+        // Search data user tanpa me reload halaman
         function loadPage(page) {
             const keyword = document.getElementById("search-input").value;
             const formData = new FormData();
@@ -297,9 +302,10 @@ $result = mysqli_query($conn, $query);
         }
 
         document.getElementById("search-input").addEventListener("input", function() {
-            loadPage(1); // reset ke halaman 1 saat ketik pencarian
+            loadPage(1);
         });
 
+        // Klik pagination
         document.addEventListener("click", function(e) {
             if (e.target.classList.contains("pagination-link")) {
                 e.preventDefault();
@@ -322,6 +328,7 @@ $result = mysqli_query($conn, $query);
         });
     </script>
 
+    <!-- Alert saat berhasil login -->
     <?php if (isset($_SESSION['login_success'])): ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
@@ -345,7 +352,7 @@ $result = mysqli_query($conn, $query);
         <?php unset($_SESSION['login_success']); ?>
     <?php endif; ?>
 
-
+    <!-- Alert saat berhasil menambah data onsite baru -->
     <?php if (isset($_SESSION['tambah_berhasil'])): ?>
         <script>
             Swal.fire({

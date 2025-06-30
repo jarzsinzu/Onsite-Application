@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../include/koneksi.php';
+require '../include/koneksi.php'; 
 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
@@ -11,7 +11,6 @@ if (isset($_FILES['csvFile']) && $_FILES['csvFile']['error'] === 0) {
     $file = $_FILES['csvFile']['tmp_name'];
     $handle = fopen($file, 'r');
 
-    // Lewati baris header
     fgetcsv($handle);
 
     $user_id = $_SESSION['user_id'];
@@ -46,10 +45,18 @@ if (isset($_FILES['csvFile']) && $_FILES['csvFile']['error'] === 0) {
 
         $stmt = mysqli_prepare($conn, $query);
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "sssssssis",
-                $user_id, $tanggal, $latitude, $longitude,
-                $keterangan_kegiatan, $jam_mulai, $jam_selesai,
-                $estimasi_biaya, $status_pembayaran
+            mysqli_stmt_bind_param(
+                $stmt,
+                "sssssssis",
+                $user_id,
+                $tanggal,
+                $latitude,
+                $longitude,
+                $keterangan_kegiatan,
+                $jam_mulai,
+                $jam_selesai,
+                $estimasi_biaya,
+                $status_pembayaran
             );
 
             if (mysqli_stmt_execute($stmt)) {

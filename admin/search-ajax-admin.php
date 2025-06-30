@@ -1,6 +1,7 @@
 <?php
 require('../include/koneksi.php');
 
+// Mengambil data search & pagination dari request POST
 $search = $_POST['search'] ?? '';
 $page = $_POST['page'] ?? 1;
 $records_per_page = 5;
@@ -8,6 +9,7 @@ $offset = ($page - 1) * $records_per_page;
 
 $search = mysqli_real_escape_string($conn, $search);
 
+// Menyiapkan query dasar
 $base_query = "FROM tambah_onsite";
 $where = "";
 if (!empty($search)) {
@@ -16,11 +18,13 @@ if (!empty($search)) {
            OR status_pembayaran LIKE '%$search%'";
 }
 
+// Menghitung total data untuk pagination
 $count_query = "SELECT COUNT(*) as total $base_query $where";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
+// Query ambil data sesuai halaman
 $query = "SELECT * $base_query $where ORDER BY id DESC LIMIT $offset, $records_per_page";
 $result = mysqli_query($conn, $query);
 ?>
@@ -32,7 +36,7 @@ $result = mysqli_query($conn, $query);
             <th style="width: 120px;">Anggota</th>
             <th style="width: 120px;">Tanggal</th>
             <th>Lokasi</th>
-            <th  style="width: 150px;">Detail Kegiatan</th>
+            <th style="width: 150px;">Detail Kegiatan</th>
             <th style="width: 120px;">Waktu</th>
             <th><i class="bi bi-folder2 fs-5"></i></th>
             <th><i class="bi bi-filetype-csv fs-5"></i></th>
@@ -102,13 +106,16 @@ $result = mysqli_query($conn, $query);
     </tbody>
 </table>
 
+<!-- Pagination -->
 <div class="pagination">
     <?php if ($page > 1): ?>
         <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
     <?php endif; ?>
+    <!-- Menentukan batas awal dan akhir nomor halaman -->
     <?php
     $start = max(1, $page - 2);
     $end = min($total_pages, $page + 2);
+    // Halaman pertama
     if ($start > 1) {
         echo '<a href="#" class="pagination-link" data-page="1">1</a>';
         if ($start > 2) echo '<span>...</span>';
@@ -117,6 +124,7 @@ $result = mysqli_query($conn, $query);
         $active = ($i == $page) ? 'active' : '';
         echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
     }
+    // Halaman akhir
     if ($end < $total_pages) {
         if ($end < $total_pages - 1) echo '<span>...</span>';
         echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
@@ -127,7 +135,9 @@ $result = mysqli_query($conn, $query);
     <?php endif; ?>
 </div>
 
+<!-- Mengubah warna dropdown sesuai status yang ditentukan -->
 <script>
+    // Update class warna baru sesuai dengan status yang ditentukan
     function updateStatusColor(select) {
         const value = select.value;
         select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
@@ -141,15 +151,16 @@ $result = mysqli_query($conn, $query);
         }
     }
 
+    // Menginisialisasi semua dropdown
     document.querySelectorAll('.status-dropdown').forEach(select => {
         updateStatusColor(select);
         select.addEventListener('change', () => {
             updateStatusColor(select);
-            select.closest('form').submit(); // ✅ Kirim form ke ubah-status.php
+            select.closest('form').submit();
         });
     });
 
     if (typeof setupStatusDropdowns === 'function') {
-        setupStatusDropdowns(); // Aktifkan ulang event listener dropdown setelah tabel dimuat
+        setupStatusDropdowns();
     }
 </script>

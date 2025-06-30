@@ -205,6 +205,9 @@ $username = $_SESSION['user'];
   </div>
 
   <script>
+    // Pagination & search real time
+
+    // Search history data user tanpa me reload halaman
     function loadHistory(page = 1) {
       const keyword = document.getElementById("search-input").value;
       const formData = new FormData();
@@ -222,9 +225,10 @@ $username = $_SESSION['user'];
     }
 
     document.getElementById("search-input").addEventListener("input", function() {
-      loadHistory(1); // reset ke halaman 1 saat pencarian
+      loadHistory(1);
     });
 
+    // Klik pagination
     document.addEventListener("click", function(e) {
       if (e.target.classList.contains("pagination-link")) {
         e.preventDefault();

@@ -135,20 +135,6 @@ $username = $_SESSION['user'];
             margin: 30px 0 20px;
         }
 
-        .btn-tambah {
-            background-color: #48cfcb;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .btn-tambah:hover {
-            background-color: #229799;
-        }
-
         .iframe-map {
             width: 100%;
             height: 100px;
@@ -261,7 +247,7 @@ $username = $_SESSION['user'];
 
 <body>
 
-    <!-- ALERT MODAL -->
+    <!-- Popup saat mengubah status -->
     <div id="customAlert" class="modal-overlay" style="display: none;">
         <div class="modal-box">
             <h5>Konfirmasi</h5>
@@ -303,7 +289,6 @@ $username = $_SESSION['user'];
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> Karyawan</h2>
-            <!-- <a href="../user/tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a> -->
         </div>
 
         <div class="table-responsive" id="admin-data-container"></div>
@@ -311,8 +296,10 @@ $username = $_SESSION['user'];
 
 
     <script>
+        // Dropdown perubahan status
         let selectedFormToSubmit = null;
 
+        // Update status & mengubah warna dropdown sesuai status
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
                 updateStatusColor(select);
@@ -323,11 +310,13 @@ $username = $_SESSION['user'];
             });
         }
 
+        // Tombol batal mengubah status
         document.getElementById('cancelBtn').onclick = () => {
             document.getElementById('customAlert').style.display = 'none';
             location.reload(); // reset dropdown ke semula
         };
 
+        // Tombol konfirmasi mengubah status
         document.getElementById('confirmBtn').onclick = () => {
             if (selectedFormToSubmit) {
                 selectedFormToSubmit.submit();
@@ -336,6 +325,7 @@ $username = $_SESSION['user'];
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Memberikan warna latar pada <select> sesuai status yang ditentukan
         function updateStatusColor(select) {
             const value = select.value;
             select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
@@ -344,16 +334,16 @@ $username = $_SESSION['user'];
             else if (value === 'Menunggu') select.classList.add('bg-warning');
         }
 
+        // Update status & mengubah warna dropdown sesuai status
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
                 updateStatusColor(select);
 
-                // Hapus listener sebelumnya dulu (opsional tapi aman)
                 const cloned = select.cloneNode(true);
                 select.parentNode.replaceChild(cloned, select);
 
                 cloned.addEventListener('change', (event) => {
-                    event.preventDefault(); // ⛔ Cegah form submit otomatis
+                    event.preventDefault();
 
                     selectedFormToSubmit = cloned.closest('form');
                     document.getElementById('customAlert').style.display = 'flex';
@@ -361,7 +351,7 @@ $username = $_SESSION['user'];
             });
         }
 
-
+        // Search seluruh data tanpa me reload halaman
         function loadData(search = '', page = 1) {
             $.post('search-ajax-admin.php', {
                 search: search,
@@ -372,6 +362,7 @@ $username = $_SESSION['user'];
             });
         }
 
+        // Otomatis menampilkan data saat halaman dimuat termasuk saat search dan pagination
         $(document).ready(function() {
             loadData();
 
@@ -388,11 +379,13 @@ $username = $_SESSION['user'];
             });
         });
 
+        // Tombol batal mengubah status
         document.getElementById('cancelBtn').onclick = () => {
             document.getElementById('customAlert').style.display = 'none';
             location.reload();
         };
 
+        // Tombol konfirmasi mengubah status
         document.getElementById('confirmBtn').onclick = () => {
             if (selectedFormToSubmit) {
                 selectedFormToSubmit.submit();
@@ -400,6 +393,7 @@ $username = $_SESSION['user'];
         };
     </script>
 
+    <!-- Alert saat berhasil login -->
     <?php if (isset($_SESSION['login_success'])): ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
@@ -444,5 +438,4 @@ $username = $_SESSION['user'];
     <?php endif; ?>
 
 </body>
-
 </html>

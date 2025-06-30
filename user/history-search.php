@@ -54,19 +54,13 @@ $result = mysqli_query($conn, $sql);
           <ul style="padding-left: 15px;">
             <?php
             $id_onsite = $row['id'];
-            $anggota_result = mysqli_query($conn, "
-              SELECT a.nama 
-              FROM tim_onsite t
-              JOIN anggota a ON t.id_anggota = a.id
-              WHERE t.id_onsite = $id_onsite
-            ");
+            $anggota_result = mysqli_query($conn, "SELECT a.nama FROM tim_onsite t JOIN anggota a ON t.id_anggota = a.id WHERE t.id_onsite = $id_onsite");
             while ($anggota = mysqli_fetch_assoc($anggota_result)) {
               echo "<li>" . htmlspecialchars($anggota['nama']) . "</li>";
             }
             ?>
           </ul>
         </td>
-
         <td><?= htmlspecialchars($row['tanggal']) ?></td>
         <td style="width: 180px; height: 180px;">
           <?php if ($row['latitude'] && $row['longitude']) : ?>
