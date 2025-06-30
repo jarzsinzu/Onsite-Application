@@ -14,27 +14,45 @@ $offset = ($page - 1) * $records_per_page;
 $search = mysqli_real_escape_string($conn, $search);
 
 // Menghitung total data untuk pagination
-$count_query = "SELECT COUNT(*) as total FROM tambah_onsite 
-                WHERE user_id = $user_id 
-                AND status_pembayaran = 'Menunggu'";
+$count_query = "SELECT COUNT(DISTINCT to1.id) as total 
+                FROM tambah_onsite to1
+                LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+                LEFT JOIN anggota a ON t.id_anggota = a.id
+                WHERE to1.user_id = $user_id
+                AND to1.status_pembayaran = 'Menunggu'";
 if (!empty($search)) {
-    $count_query .= " AND (tanggal LIKE '%$search%' 
-                    OR keterangan_kegiatan LIKE '%$search%' 
-                    OR status_pembayaran LIKE '%$search%')";
+    $count_query .= " AND (
+        to1.tanggal LIKE '%$search%' 
+        OR to1.keterangan_kegiatan LIKE '%$search%' 
+        OR to1.status_pembayaran LIKE '%$search%' 
+        OR a.nama LIKE '%$search%'
+    )";
 }
+
+
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
 // Query ambil data sesuai filter dan halaman
-$data_query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id AND status_pembayaran = 'Menunggu'";
+$data_query = "SELECT DISTINCT to1.* 
+               FROM tambah_onsite to1
+               LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+               LEFT JOIN anggota a ON t.id_anggota = a.id
+               WHERE to1.user_id = $user_id
+               AND to1.status_pembayaran = 'Menunggu'";
 
 if (!empty($search)) {
-    $data_query .= " AND (tanggal LIKE '%$search%' 
-                    OR keterangan_kegiatan LIKE '%$search%' 
-                    OR status_pembayaran LIKE '%$search%')";
+    $data_query .= " AND (
+        to1.tanggal LIKE '%$search%' 
+        OR to1.keterangan_kegiatan LIKE '%$search%' 
+        OR to1.status_pembayaran LIKE '%$search%' 
+        OR a.nama LIKE '%$search%'
+    )";
 }
-$data_query .= " ORDER BY id DESC LIMIT $offset, $records_per_page";
+
+$data_query .= " ORDER BY to1.id DESC LIMIT $offset, $records_per_page";
+
 $result = mysqli_query($conn, $data_query);
 ?>
 

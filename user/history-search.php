@@ -12,26 +12,43 @@ $offset = ($page - 1) * $limit;
 
 // Hitung total data untuk pagination
 $count_sql = "
-  SELECT COUNT(*) as total 
-  FROM tambah_onsite 
-  WHERE user_id = $user_id 
-    AND status_pembayaran IN ('Disetujui', 'Ditolak')
-    AND (tanggal LIKE '%$search%' OR keterangan_kegiatan LIKE '%$search%')
+  SELECT COUNT(DISTINCT to1.id) as total
+  FROM tambah_onsite to1
+  LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+  LEFT JOIN anggota a ON t.id_anggota = a.id
+  WHERE to1.user_id = $user_id 
+    AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+    AND (
+      to1.tanggal LIKE '%$search%' 
+      OR to1.keterangan_kegiatan LIKE '%$search%'
+      OR a.nama LIKE '%$search%'
+    )
 ";
+
 $total_result = mysqli_query($conn, $count_sql);
 $total_rows = mysqli_fetch_assoc($total_result)['total'];
 $total_pages = ceil($total_rows / $limit);
 
-// Ambil data berdasarkan pencarian & halaman
-$sql = "SELECT * FROM tambah_onsite 
-        WHERE user_id = $user_id 
-        AND status_pembayaran IN ('Disetujui', 'Ditolak')
-        AND (tanggal LIKE '%$search%' OR keterangan_kegiatan LIKE '%$search%')
-        ORDER BY id DESC 
-        LIMIT $offset, $limit";
+// // Ambil data berdasarkan pencarian & halaman
+$sql = "
+  SELECT DISTINCT to1.* 
+  FROM tambah_onsite to1
+  LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+  LEFT JOIN anggota a ON t.id_anggota = a.id
+  WHERE to1.user_id = $user_id 
+    AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+    AND (
+      to1.tanggal LIKE '%$search%' 
+      OR to1.keterangan_kegiatan LIKE '%$search%'
+      OR a.nama LIKE '%$search%'
+    )
+  ORDER BY to1.id DESC
+  LIMIT $offset, $limit
+";
 
 $result = mysqli_query($conn, $sql);
 ?>
+
 
 <table class="table table-bordered align-middle table-rounded rounded-4 overflow-hidden shadow">
   <thead class="table-dark text-center">

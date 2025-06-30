@@ -2,31 +2,41 @@
 require('../include/koneksi.php');
 
 // Mengambil data search & pagination dari request POST
-$search = $_POST['search'] ?? '';
-$page = $_POST['page'] ?? 1;
+$search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
+$page = max((int)($_POST['page'] ?? 1), 1);
 $records_per_page = 5;
 $offset = ($page - 1) * $records_per_page;
 
-$search = mysqli_real_escape_string($conn, $search);
+// // Menyiapkan query
+$base_query = "
+    FROM tambah_onsite o
+    LEFT JOIN tim_onsite t ON o.id = t.id_onsite
+    LEFT JOIN anggota a ON t.id_anggota = a.id
+";
 
-// Menyiapkan query dasar
-$base_query = "FROM tambah_onsite";
 $where = "";
 if (!empty($search)) {
-    $where = "WHERE tanggal LIKE '%$search%' 
-           OR keterangan_kegiatan LIKE '%$search%' 
-           OR status_pembayaran LIKE '%$search%'";
+    $where = "WHERE o.tanggal LIKE '%$search%' 
+           OR o.keterangan_kegiatan LIKE '%$search%' 
+           OR o.status_pembayaran LIKE '%$search%' 
+           OR a.nama LIKE '%$search%'";
 }
 
 // Menghitung total data untuk pagination
-$count_query = "SELECT COUNT(*) as total $base_query $where";
+$count_query = "SELECT COUNT(DISTINCT o.id) as total $base_query $where";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
 // Query ambil data sesuai halaman
-$query = "SELECT * $base_query $where ORDER BY id DESC LIMIT $offset, $records_per_page";
-$result = mysqli_query($conn, $query);
+$data_query = "
+    SELECT DISTINCT o.* 
+    $base_query 
+    $where 
+    ORDER BY o.id DESC 
+    LIMIT $offset, $records_per_page
+";
+$result = mysqli_query($conn, $data_query);
 ?>
 
 
