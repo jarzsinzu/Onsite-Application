@@ -155,18 +155,26 @@ $user_id = $_SESSION['user_id'];
         // ✅ Lokasi otomatis
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
+                navigator.geolocation.getCurrentPosition(showPosition, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
             } else {
-                document.getElementById("lokasi-status").innerText = "Geolocation tidak didukung.";
+                document.getElementById("lokasi-status").innerText = "Geolocation tidak didukung oleh browser Anda.";
             }
         }
 
         function showPosition(pos) {
             let lat = pos.coords.latitude;
             let lon = pos.coords.longitude;
+
             document.getElementById("latitude").value = lat;
             document.getElementById("longitude").value = lon;
-            document.getElementById("mapPreview").src = `https://www.google.com/maps?q=${lat},${lon}&hl=id&z=15&output=embed`;
+
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=id&z=15&output=embed`;
+            document.getElementById("mapPreview").src = mapUrl;
+
             document.getElementById("lokasi-status").textContent = "Lokasi berhasil dideteksi.";
         }
 
