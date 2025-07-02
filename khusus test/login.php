@@ -152,14 +152,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       align-items: flex-start;
     }
 
-    .welcome-text p {
-      font-size: 3rem;
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .welcome-section h2 {
-      font-weight: bold;
+    .welcome-text p,
+    .welcome-text h2 {
       font-size: 3rem;
       margin: 0;
       line-height: 1.2;
@@ -227,7 +221,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       border-color: #48cfcb;
       box-shadow: 0 0 0 2px rgba(72, 207, 203, 0.2);
       background: #2a2a2a;
-      color: #fff;
+      color: #48cfcb;
       outline: none;
     }
 
@@ -406,15 +400,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
               <?php endif; ?>
 
-              <form method="POST" action="" novalidate>
+              <form method="POST" action="">
                 <div class="input-group-custom">
                   <i class="bi bi-person input-icon-left"></i>
-                  <input type="text" name="username" class="form-control-custom" placeholder="Username" autocomplete="username" />
+                  <input type="text" name="username" class="form-control-custom" placeholder="Username" autocomplete="username" required />
                 </div>
 
                 <div class="input-group-custom">
                   <i class="bi bi-key input-icon-left"></i>
-                  <input type="password" name="password" id="password" class="form-control-custom" placeholder="Password" />
+                  <input type="password" name="password" id="password" class="form-control-custom" placeholder="Password" required />
                   <i class="bi bi-eye-slash input-icon-right toggle-password" id="togglePassword"></i>
                 </div>
 
@@ -448,51 +442,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       
       input.addEventListener('blur', function() {
         this.parentElement.querySelector('.input-icon-left').style.color = '#999';
-      });
-    });
-
-    // Form validation
-    document.querySelector('form').addEventListener('submit', function(e) {
-      const username = document.querySelector('input[name="username"]').value.trim();
-      const password = document.querySelector('input[name="password"]').value;
-      
-      // Remove existing alert if any
-      const existingAlert = document.querySelector('.custom-alert');
-      if (existingAlert && !existingAlert.querySelector('.alert-icon')) {
-        existingAlert.remove();
-      }
-      
-      if (!username || !password) {
-        e.preventDefault(); // Prevent form submission
-        
-        // Create and show alert
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'custom-alert';
-        alertDiv.innerHTML = `
-          <i class="bi bi-exclamation-circle-fill alert-icon"></i>
-          <span>Username dan Password wajib diisi!</span>
-        `;
-        
-        // Insert alert before the form
-        const form = document.querySelector('form');
-        form.parentNode.insertBefore(alertDiv, form);
-        
-        // Focus on empty field
-        if (!username) {
-          document.querySelector('input[name="username"]').focus();
-        } else if (!password) {
-          document.querySelector('input[name="password"]').focus();
-        }
-      }
-    });
-
-    // Remove alert when user starts typing
-    document.querySelectorAll('input[name="username"], input[name="password"]').forEach(input => {
-      input.addEventListener('input', function() {
-        const alert = document.querySelector('.custom-alert');
-        if (alert && !alert.textContent.includes('Login error') && !alert.textContent.includes('Gagal terhubung') && !alert.textContent.includes('Tidak dapat menemukan')) {
-          alert.remove();
-        }
       });
     });
   </script>
