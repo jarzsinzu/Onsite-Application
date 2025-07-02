@@ -209,6 +209,18 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             background-color: #229799;
         }
 
+        /* Bisa disisipkan ke <style> dashboard-user.php */
+        .onsite-badge {
+            background-color: #48cfcb;
+            color: #fff;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            margin: 3px;
+            display: inline-block;
+        }
+
+
         .badge {
             font-size: 0.9rem;
             padding: 8px 12px;
