@@ -90,7 +90,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login ACTIVin Account</title>
-  
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -320,7 +319,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       .welcome-section {
         min-height: 200px;
-        display: none; /* Hide welcome section on very small screens */
+        display: none;
+        /* Hide welcome section on very small screens */
       }
 
       .welcome-text p,
@@ -368,6 +368,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         opacity: 0;
         transform: translateX(-10px);
       }
+
       to {
         opacity: 1;
         transform: translateX(0);
@@ -380,7 +381,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <div class="main-container">
     <div class="login-card">
       <img src="asset/logo-E.png" alt="Logo" class="card-logo">
-      
+
       <div class="container-fluid p-0">
         <div class="row g-0">
           <!-- Welcome Section -->
@@ -429,7 +430,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
+
   <script>
     // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function() {
@@ -445,7 +446,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       input.addEventListener('focus', function() {
         this.parentElement.querySelector('.input-icon-left').style.color = '#48cfcb';
       });
-      
+
       input.addEventListener('blur', function() {
         this.parentElement.querySelector('.input-icon-left').style.color = '#999';
       });
@@ -455,16 +456,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     document.querySelector('form').addEventListener('submit', function(e) {
       const username = document.querySelector('input[name="username"]').value.trim();
       const password = document.querySelector('input[name="password"]').value;
-      
+
       // Remove existing alert if any
       const existingAlert = document.querySelector('.custom-alert');
       if (existingAlert && !existingAlert.querySelector('.alert-icon')) {
         existingAlert.remove();
       }
-      
+
       if (!username || !password) {
         e.preventDefault(); // Prevent form submission
-        
+
         // Create and show alert
         const alertDiv = document.createElement('div');
         alertDiv.className = 'custom-alert';
@@ -472,11 +473,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <i class="bi bi-exclamation-circle-fill alert-icon"></i>
           <span>Username dan Password wajib diisi!</span>
         `;
-        
+
         // Insert alert before the form
         const form = document.querySelector('form');
         form.parentNode.insertBefore(alertDiv, form);
-        
+
         // Focus on empty field
         if (!username) {
           document.querySelector('input[name="username"]').focus();

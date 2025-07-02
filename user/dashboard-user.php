@@ -8,21 +8,153 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
 }
 
 $current_page = basename($_SERVER['PHP_SELF']);
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$records_per_page = 5;
-$offset = ($page - 1) * $records_per_page;
-
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['user'];
 
-$count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
-$count_result = mysqli_query($conn, $count_query);
-$total_rows = mysqli_fetch_assoc($count_result)['total'];
-$total_pages = ceil($total_rows / $records_per_page);
+// Handle AJAX request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+    $search = $_POST['search'] ?? '';
+    $page = $_POST['page'] ?? 1;
+    $records_per_page = 5;
+    $offset = ($page - 1) * $records_per_page;
 
-$query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
-$result = mysqli_query($conn, $query);
+    $search = mysqli_real_escape_string($conn, $search);
 
+    // Hitung total data untuk pagination
+    $count_query = "SELECT COUNT(DISTINCT to1.id) as total 
+        FROM tambah_onsite to1
+        LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+        LEFT JOIN anggota a ON t.id_anggota = a.id
+        WHERE to1.user_id = $user_id
+        AND to1.status_pembayaran = 'Menunggu'";
+    if (!empty($search)) {
+        $count_query .= " AND (
+            to1.tanggal LIKE '%$search%' 
+            OR to1.keterangan_kegiatan LIKE '%$search%' 
+            OR to1.status_pembayaran LIKE '%$search%' 
+            OR a.nama LIKE '%$search%'
+        )";
+    }
+
+    $count_result = mysqli_query($conn, $count_query);
+    $total_rows = mysqli_fetch_assoc($count_result)['total'];
+    $total_pages = ceil($total_rows / $records_per_page);
+
+    // Query ambil data
+    $data_query = "SELECT DISTINCT to1.* 
+        FROM tambah_onsite to1
+        LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+        LEFT JOIN anggota a ON t.id_anggota = a.id
+        WHERE to1.user_id = $user_id
+        AND to1.status_pembayaran = 'Menunggu'";
+    if (!empty($search)) {
+        $data_query .= " AND (
+            to1.tanggal LIKE '%$search%' 
+            OR to1.keterangan_kegiatan LIKE '%$search%' 
+            OR to1.status_pembayaran LIKE '%$search%' 
+            OR a.nama LIKE '%$search%'
+        )";
+    }
+    $data_query .= " ORDER BY to1.id DESC LIMIT $offset, $records_per_page";
+
+    $result = mysqli_query($conn, $data_query);
+
+    // Output AJAX content
+    ob_start();
+?>
+
+    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+        <div class="onsite-card">
+            <div class="onsite-header">
+                <div>
+                    <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+                    <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                </div>
+                <div>
+                    <?php
+                    $status = $row['status_pembayaran'];
+                    $statusClass = match ($status) {
+                        'Menunggu' => 'warning',
+                        'Disetujui' => 'success',
+                        'Ditolak' => 'danger',
+                        default => 'secondary'
+                    };
+                    ?>
+                    <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+                </div>
+            </div>
+
+            <div class="onsite-details">
+                <div class="onsite-info">
+                    <div><strong>Anggota:</strong><br>
+                        <?php
+                        $id_onsite = $row['id'];
+                        $anggota_result = mysqli_query($conn, "
+                            SELECT a.nama 
+                            FROM tim_onsite t
+                            JOIN anggota a ON t.id_anggota = a.id
+                            WHERE t.id_onsite = $id_onsite
+                        ");
+                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                            echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                        }
+                        ?>
+                    </div>
+                    <div class="mt-2"><strong>Biaya:</strong> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+                    <div class="mt-2 onsite-files">
+                        <?php if (!empty($row['dokumentasi'])): ?>
+                            <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                        <?php endif; ?>
+                        <?php if (!empty($row['file_csv'])): ?>
+                            <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="map-box">
+                    <?php if ($row['latitude'] && $row['longitude']) : ?>
+                        <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    <?php else : ?>
+                        <em>Lokasi tidak tersedia</em>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php endwhile; ?>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <?php if ($page > 1): ?>
+            <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+        <?php endif; ?>
+        <?php
+        $start = max(1, $page - 2);
+        $end = min($total_pages, $page + 2);
+        if ($start > 1) {
+            echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+            if ($start > 2) echo '<span>...</span>';
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $active = ($i == $page) ? 'active' : '';
+            echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+        }
+        if ($end < $total_pages) {
+            if ($end < $total_pages - 1) echo '<span>...</span>';
+            echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+        }
+        ?>
+        <?php if ($page < $total_pages): ?>
+            <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+        <?php endif; ?>
+    </div>
+
+<?php
+    echo ob_get_clean();
+    exit();
+}
+
+// Untuk data anggota
 $anggota_result = mysqli_query($conn, "SELECT id, nama FROM anggota");
 $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
 ?>
@@ -42,12 +174,13 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
-            display: flex;
             background-color: #f5f5f5;
             color: #333;
             font-family: 'Inter', sans-serif;
+            transition: margin-left 0.3s ease;
         }
 
+        /* Sidebar Styles */
         .sidebar {
             width: 200px;
             background: #1c1c1c;
@@ -55,6 +188,15 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             padding: 30px 20px;
             height: 100vh;
             position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
         }
 
         .sidebar .card-logo {
@@ -62,57 +204,6 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             height: auto;
             margin-bottom: 28px;
         }
-
-        .pagination {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 6px 12px;
-            border: 1px solid #ddd;
-            color: #48cfcb;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-
-        .pagination a.active {
-            background-color: #48cfcb;
-            color: white;
-            border-color: #48cfcb;
-        }
-
-        .pagination a:hover:not(.active) {
-            background-color: #ddd;
-        }
-
-        .table {
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            background-color: white;
-        }
-
-        .table th {
-            background-color: #1c1c1c;
-            color: white;
-        }
-
-        .table td {
-            border-bottom: 2px solid #dee2e6;
-            text-align: center;
-        }
-
-        .table tr:hover {
-            background-color: #f8f9fa;
-        }
-
 
         .nav-container {
             display: flex;
@@ -145,22 +236,52 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             font-weight: bold;
         }
 
+        /* Main Content */
         .main {
             margin-left: 200px;
-            padding: 40px;
+            padding: 20px;
+            width: calc(100% - 200px);
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        .main.expanded {
+            margin-left: 0;
             width: 100%;
         }
 
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #1c1c1c;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .hamburger:hover {
+            background: #48cfcb;
+        }
+
+        /* Topbar */
         .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .input-with-icon {
             position: relative;
             max-width: 300px;
+            width: 100%;
         }
 
         .input-with-icon input {
@@ -181,6 +302,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         .profile {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
 
         .profile span {
@@ -189,11 +311,14 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             font-weight: bold;
         }
 
+        /* Header Section */
         .header-section {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 30px 0 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .header-section button {
@@ -203,18 +328,120 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             border-radius: 8px;
             color: white;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .header-section button:hover {
             background-color: #229799;
         }
 
-        .badge {
-            font-size: 0.9rem;
-            padding: 8px 12px;
-            border-radius: 20px;
+        /* Onsite Card Styles */
+        .onsite-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
+        .onsite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .onsite-badge {
+            background-color: #48cfcb;
+            color: #fff;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.85rem;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .map-box {
+            width: 100%;
+            max-width: 300px;
+            height: 180px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .onsite-details {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .onsite-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .badge-status {
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .badge-status.warning {
+            background-color: #fff4cc;
+            color: #b38f00;
+        }
+
+        .badge-status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-status.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .onsite-files a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #0d6efd;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            color: #48cfcb;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .pagination a.active {
+            background-color: #48cfcb;
+            color: white;
+            border-color: #48cfcb;
+        }
+
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+
+        /* Modal Styles */
         .modal-body {
             max-height: 70vh;
             overflow-y: auto;
@@ -228,7 +455,65 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             min-width: 110px;
         }
 
-        @media (max-width: 576px) {
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 70px 15px 20px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-with-icon {
+                max-width: 100%;
+            }
+
+            .profile {
+                justify-content: center;
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-section h2 {
+                text-align: center;
+            }
+
+            .onsite-details {
+                flex-direction: column;
+            }
+
+            .onsite-info {
+                min-width: auto;
+            }
+
+            .map-box {
+                max-width: 100%;
+                height: 200px;
+            }
+
+            .pagination {
+                justify-content: center;
+            }
+
             .modal-footer {
                 flex-direction: column !important;
                 align-items: stretch !important;
@@ -237,12 +522,61 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             .modal-footer .btn {
                 width: 100%;
             }
+
+            .modal-footer .d-flex {
+                flex-direction: column !important;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main {
+                padding: 70px 10px 15px;
+            }
+
+            .onsite-card {
+                padding: 15px;
+            }
+
+            .onsite-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .profile span {
+                font-size: 14px;
+            }
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
         }
     </style>
 </head>
 
 <body>
-    <div class="sidebar">
+    <!-- Hamburger Menu -->
+    <button class="hamburger" id="hamburger">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
         <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
         <div class="nav-container">
             <div class="nav-links">
@@ -258,7 +592,9 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             </div>
         </div>
     </div>
-    <div class="main">
+
+    <!-- Main Content -->
+    <div class="main" id="main-content">
         <form class="search-bar" method="post">
             <div class="topbar">
                 <div class="input-with-icon">
@@ -278,7 +614,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         </div>
 
         <div class="table-responsive" id="data-container">
-            <?php include 'search-ajax-user.php'; ?>
+            <!-- Content will be loaded here via AJAX -->
         </div>
     </div>
 
@@ -402,30 +738,104 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                         </div>
                     </div>
 
-
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Script tambahan dari form -->
     <script>
+        // Complete JavaScript for Dashboard User ACTIVin
         document.addEventListener("DOMContentLoaded", function() {
             const searchInput = document.getElementById("search-input");
             const dataContainer = document.getElementById("data-container");
+            const hamburger = document.getElementById("hamburger");
+            const sidebar = document.getElementById("sidebar");
+            const sidebarOverlay = document.getElementById("sidebar-overlay");
+            const mainContent = document.getElementById("main-content");
+            const modal = document.getElementById("modalTambahOnsite");
 
+            // Initial load
+            fetchData(1, "");
+
+            // Hamburger menu functionality
+            hamburger.addEventListener("click", function() {
+                sidebar.classList.toggle("show");
+                sidebarOverlay.classList.toggle("show");
+                document.body.style.overflow = sidebar.classList.contains("show") ? "hidden" : "auto";
+            });
+
+            // Close sidebar when clicking overlay
+            sidebarOverlay.addEventListener("click", function() {
+                closeSidebar();
+            });
+
+            // Close sidebar when clicking on nav links (mobile)
+            sidebar.addEventListener("click", function(e) {
+                if (e.target.tagName === 'A' && window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener("resize", function() {
+                if (window.innerWidth > 768) {
+                    closeSidebar();
+                    document.body.style.overflow = "auto";
+                }
+            });
+
+            // Function to close sidebar
+            function closeSidebar() {
+                sidebar.classList.remove("show");
+                sidebarOverlay.classList.remove("show");
+                document.body.style.overflow = "auto";
+            }
+
+            // AJAX fetch data function
             function fetchData(page = 1, keyword = "") {
                 const xhr = new XMLHttpRequest();
-                xhr.open("POST", "search-ajax-user.php", true);
+                xhr.open("POST", "", true);
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+                // Show loading indicator
+                dataContainer.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Memuat data...</p>
+            </div>`;
 
                 xhr.onload = function() {
                     if (xhr.status === 200) {
                         dataContainer.innerHTML = xhr.responseText;
+
+                        // Show no data message if empty
+                        if (xhr.responseText.trim() === '' || xhr.responseText.includes('No data found')) {
+                            dataContainer.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                            <p class="mt-3 text-muted">Tidak ada data onsite yang ditemukan</p>
+                        </div>`;
+                        }
+                    } else {
+                        dataContainer.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Terjadi kesalahan saat memuat data. Silakan coba lagi.
+                    </div>`;
                     }
                 };
 
-                xhr.send("page=" + page + "&search=" + encodeURIComponent(keyword));
+                xhr.onerror = function() {
+                    dataContainer.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="bi bi-wifi-off"></i>
+                    Koneksi bermasalah. Silakan periksa koneksi internet Anda.
+                </div>`;
+                };
+
+                xhr.send("ajax=1&page=" + page + "&search=" + encodeURIComponent(keyword));
             }
 
             // Handle pagination click
@@ -435,107 +845,402 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                     const page = e.target.getAttribute("data-page");
                     const keyword = searchInput.value;
                     fetchData(page, keyword);
+
+                    // Scroll to top of data container
+                    dataContainer.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 }
             });
 
-            // Handle search input
+            // Handle search input with debounce
+            let searchTimeout;
             searchInput.addEventListener("input", function() {
-                fetchData(1, this.value);
+                clearTimeout(searchTimeout);
+                const keyword = this.value;
+
+                searchTimeout = setTimeout(() => {
+                    fetchData(1, keyword);
+                }, 300); // 300ms delay for better UX
             });
-        });
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const tanggalInput = document.getElementById("tanggal");
-            const today = new Date().toISOString().split('T')[0];
-            tanggalInput.setAttribute("min", today);
-        });
-
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                document.getElementById("lokasi-status").innerText = "Geolocation tidak didukung oleh browser Anda.";
-            }
-        }
-
-        function showPosition(pos) {
-            let lat = pos.coords.latitude;
-            let lon = pos.coords.longitude;
-            document.getElementById("latitude").value = lat;
-            document.getElementById("longitude").value = lon;
-            const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=id&z=15&output=embed`;
-            document.getElementById("mapPreview").src = mapUrl;
-            document.getElementById("lokasi-status").textContent = "Lokasi berhasil dideteksi.";
-        }
-
-        function showError() {
-            document.getElementById("lokasi-status").textContent = "Gagal mendeteksi lokasi.";
-        }
-
-        document.addEventListener("DOMContentLoaded", getLocation);
-
-        const anggotaData = <?= json_encode(mysqli_fetch_all(mysqli_query($conn, "SELECT id, nama FROM anggota"), MYSQLI_ASSOC)); ?>;
-        const anggotaInput = document.getElementById('anggota-input');
-        const anggotaList = document.getElementById('anggota-list');
-        const anggotaTerpilih = document.getElementById('anggota-terpilih');
-        let selectedAnggota = [];
-
-        function renderList(filtered) {
-            anggotaList.innerHTML = '';
-            filtered.forEach(a => {
-                if (!selectedAnggota.find(item => item.id == a.id)) {
-                    const div = document.createElement('div');
-                    div.textContent = a.nama;
-                    div.className = 'p-1 anggota-item hover-bg';
-                    div.style.cursor = 'pointer';
-                    div.onclick = () => tambahAnggota(a);
-                    anggotaList.appendChild(div);
+            // Clear search on ESC key
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Escape") {
+                    this.value = "";
+                    fetchData(1, "");
                 }
             });
+
+            // Modal functionality
+            if (modal) {
+                // Set minimum date to today
+                const tanggalInput = document.getElementById("tanggal");
+                if (tanggalInput) {
+                    const today = new Date().toISOString().split('T')[0];
+                    tanggalInput.setAttribute("min", today);
+                }
+
+                // Get location when modal opens
+                modal.addEventListener('shown.bs.modal', function() {
+                    getLocation();
+                    initializeAnggotaSelection();
+                });
+
+                // Reset form when modal closes
+                modal.addEventListener('hidden.bs.modal', function() {
+                    const form = modal.querySelector('form');
+                    if (form) {
+                        form.reset();
+                        document.getElementById("anggota-terpilih").innerHTML = "";
+                        document.getElementById("anggota-list").innerHTML = "";
+                        document.getElementById("mapPreview").src = "";
+                        document.getElementById("lokasi-status").innerText = "Mendeteksi lokasi...";
+                    }
+                });
+            }
+
+            // Geolocation functions
+            function getLocation() {
+                const lokasiStatus = document.getElementById("lokasi-status");
+
+                if (navigator.geolocation) {
+                    lokasiStatus.innerText = "Mendeteksi lokasi...";
+                    navigator.geolocation.getCurrentPosition(showPosition, showError, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000
+                    });
+                } else {
+                    lokasiStatus.innerText = "Geolocation tidak didukung oleh browser Anda.";
+                    lokasiStatus.style.color = "#dc3545";
+                }
+            }
+
+            function showPosition(pos) {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                const lokasiStatus = document.getElementById("lokasi-status");
+
+                document.getElementById("latitude").value = lat;
+                document.getElementById("longitude").value = lon;
+
+                const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=id&z=15&output=embed`;
+                document.getElementById("mapPreview").src = mapUrl;
+
+                lokasiStatus.innerText = `Lokasi terdeteksi: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                lokasiStatus.style.color = "#198754";
+            }
+
+            function showError(error) {
+                const lokasiStatus = document.getElementById("lokasi-status");
+                lokasiStatus.style.color = "#dc3545";
+
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        lokasiStatus.innerText = "Akses lokasi ditolak. Mohon izinkan akses lokasi.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        lokasiStatus.innerText = "Informasi lokasi tidak tersedia.";
+                        break;
+                    case error.TIMEOUT:
+                        lokasiStatus.innerText = "Timeout saat mendeteksi lokasi.";
+                        break;
+                    default:
+                        lokasiStatus.innerText = "Terjadi kesalahan saat mendeteksi lokasi.";
+                        break;
+                }
+            }
+
+            // Anggota selection functionality
+            function initializeAnggotaSelection() {
+                const anggotaInput = document.getElementById("anggota-input");
+                const anggotaList = document.getElementById("anggota-list");
+                const anggotaTerpilih = document.getElementById("anggota-terpilih");
+
+                // Get anggota data from PHP (assuming it's available globally)
+                const anggotaData = <?php echo json_encode($anggota_array); ?>;
+                let selectedAnggota = [];
+
+                anggotaInput.addEventListener("input", function() {
+                    const keyword = this.value.toLowerCase();
+                    const filtered = anggotaData.filter(anggota =>
+                        anggota.nama.toLowerCase().includes(keyword) &&
+                        !selectedAnggota.some(selected => selected.id === anggota.id)
+                    );
+
+                    displayAnggotaList(filtered);
+                });
+
+                function displayAnggotaList(anggotaArray) {
+                    anggotaList.innerHTML = "";
+
+                    if (anggotaArray.length === 0) {
+                        anggotaList.innerHTML = '<small class="text-muted">Tidak ada anggota ditemukan</small>';
+                        return;
+                    }
+
+                    anggotaArray.forEach(anggota => {
+                        const div = document.createElement("div");
+                        div.className = "p-2 border-bottom cursor-pointer hover-bg-light";
+                        div.style.cursor = "pointer";
+                        div.innerText = anggota.nama;
+
+                        div.addEventListener("click", function() {
+                            addAnggota(anggota);
+                            anggotaInput.value = "";
+                            anggotaList.innerHTML = "";
+                        });
+
+                        div.addEventListener("mouseenter", function() {
+                            this.style.backgroundColor = "#f8f9fa";
+                        });
+
+                        div.addEventListener("mouseleave", function() {
+                            this.style.backgroundColor = "";
+                        });
+
+                        anggotaList.appendChild(div);
+                    });
+                }
+
+                function addAnggota(anggota) {
+                    if (!selectedAnggota.some(selected => selected.id === anggota.id)) {
+                        selectedAnggota.push(anggota);
+                        updateAnggotaTerpilih();
+                    }
+                }
+
+                function removeAnggota(anggotaId) {
+                    selectedAnggota = selectedAnggota.filter(anggota => anggota.id !== anggotaId);
+                    updateAnggotaTerpilih();
+                }
+
+                function updateAnggotaTerpilih() {
+                    anggotaTerpilih.innerHTML = "";
+
+                    if (selectedAnggota.length === 0) {
+                        anggotaTerpilih.innerHTML = '<small class="text-muted">Belum ada anggota yang dipilih</small>';
+                        return;
+                    }
+
+                    selectedAnggota.forEach(anggota => {
+                        const badge = document.createElement("span");
+                        badge.className = "badge bg-info text-white me-2 mb-2 d-inline-flex align-items-center";
+                        badge.innerHTML = `
+                    ${anggota.nama}
+                    <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.7em;" onclick="removeAnggota(${anggota.id})"></button>
+                    <input type="hidden" name="anggota[]" value="${anggota.id}">
+                `;
+
+                        const closeBtn = badge.querySelector('.btn-close');
+                        closeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            removeAnggota(anggota.id);
+                        });
+
+                        anggotaTerpilih.appendChild(badge);
+                    });
+                }
+
+                // Make removeAnggota globally accessible for onclick handler
+                window.removeAnggota = removeAnggota;
+            }
+
+            // Form validation
+            const form = document.querySelector('#modalTambahOnsite form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const requiredFields = form.querySelectorAll('[required]');
+                    let isValid = true;
+
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    });
+
+                    // Check if at least one anggota is selected
+                    const selectedAnggota = document.querySelectorAll('input[name="anggota[]"]');
+                    if (selectedAnggota.length === 0) {
+                        isValid = false;
+                        Swal.fire({
+                            title: 'Peringatan!',
+                            text: 'Pilih minimal satu anggota tim.',
+                            icon: 'warning',
+                            confirmButtonColor: '#48cfcb'
+                        });
+                    }
+
+                    // Check if location is detected
+                    const latitude = document.getElementById('latitude').value;
+                    const longitude = document.getElementById('longitude').value;
+                    if (!latitude || !longitude) {
+                        isValid = false;
+                        Swal.fire({
+                            title: 'Peringatan!',
+                            text: 'Lokasi belum terdeteksi. Pastikan Anda mengizinkan akses lokasi.',
+                            icon: 'warning',
+                            confirmButtonColor: '#48cfcb'
+                        });
+                    }
+
+                    if (!isValid) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // File upload validation
+            const dokumentasiInput = document.querySelector('input[name="dokumentasi"]');
+            const csvInput = document.querySelector('input[name="file_csv"]');
+
+            if (dokumentasiInput) {
+                dokumentasiInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                        const maxSize = 5 * 1024 * 1024; // 5MB
+
+                        if (!allowedTypes.includes(file.type)) {
+                            Swal.fire({
+                                title: 'File Tidak Valid!',
+                                text: 'Hanya file PDF, JPG, JPEG, dan PNG yang diizinkan.',
+                                icon: 'error',
+                                confirmButtonColor: '#48cfcb'
+                            });
+                            this.value = '';
+                            return;
+                        }
+
+                        if (file.size > maxSize) {
+                            Swal.fire({
+                                title: 'File Terlalu Besar!',
+                                text: 'Ukuran file maksimal 5MB.',
+                                icon: 'error',
+                                confirmButtonColor: '#48cfcb'
+                            });
+                            this.value = '';
+                            return;
+                        }
+                    }
+                });
+            }
+
+            if (csvInput) {
+                csvInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const maxSize = 2 * 1024 * 1024; // 2MB
+
+                        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                            Swal.fire({
+                                title: 'File Tidak Valid!',
+                                text: 'Hanya file CSV yang diizinkan.',
+                                icon: 'error',
+                                confirmButtonColor: '#48cfcb'
+                            });
+                            this.value = '';
+                            return;
+                        }
+
+                        if (file.size > maxSize) {
+                            Swal.fire({
+                                title: 'File Terlalu Besar!',
+                                text: 'Ukuran file CSV maksimal 2MB.',
+                                icon: 'error',
+                                confirmButtonColor: '#48cfcb'
+                            });
+                            this.value = '';
+                            return;
+                        }
+                    }
+                });
+            }
+
+            // Smooth scrolling for internal links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Auto-refresh data every 30 seconds (optional)
+            setInterval(function() {
+                if (!document.hidden) { // Only refresh when tab is active
+                    const currentKeyword = searchInput.value;
+                    const currentPage = document.querySelector('.pagination-link.active')?.getAttribute('data-page') || 1;
+                    fetchData(currentPage, currentKeyword);
+                }
+            }, 30000);
+
+            // Handle connection status
+            window.addEventListener('online', function() {
+                Swal.fire({
+                    title: 'Koneksi Tersambung',
+                    text: 'Koneksi internet tersambung kembali.',
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            });
+
+            window.addEventListener('offline', function() {
+                Swal.fire({
+                    title: 'Koneksi Terputus',
+                    text: 'Periksa koneksi internet Anda.',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            });
+        });
+
+        // Global functions for backward compatibility
+        function getLocation() {
+            // This function is now handled in the DOMContentLoaded event
+            console.log('getLocation called - handled by modal event');
         }
 
-        function tambahAnggota(anggota) {
-            selectedAnggota.push(anggota);
-            updateBadge();
-            anggotaInput.value = '';
-            renderList(anggotaData);
+        // Utility functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
         }
 
-        function hapusAnggota(id) {
-            selectedAnggota = selectedAnggota.filter(a => a.id != id);
-            updateBadge();
-            renderList(anggotaData);
-        }
-
-        function updateBadge() {
-            anggotaTerpilih.innerHTML = '';
-            selectedAnggota.forEach(a => {
-                const span = document.createElement('span');
-                span.className = 'badge bg-info text-white me-1 mb-1';
-                span.innerText = a.nama;
-                span.onclick = () => hapusAnggota(a.id);
-
-                const hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = 'anggota_ids[]';
-                hidden.value = a.id;
-
-                anggotaTerpilih.appendChild(span);
-                anggotaTerpilih.appendChild(hidden);
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
             });
         }
 
-        anggotaInput.addEventListener('input', () => {
-            const keyword = anggotaInput.value.toLowerCase();
-            const filtered = anggotaData.filter(a => a.nama.toLowerCase().includes(keyword));
-            renderList(filtered);
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderList(anggotaData);
-        });
+        function formatTime(timeString) {
+            return new Date('1970-01-01T' + timeString).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
     </script>
-
 </body>
-
 </html>
