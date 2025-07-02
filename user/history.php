@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
   ";
 
   $result = mysqli_query($conn, $sql);
-  ?>
+?>
 
   <!-- Card Content -->
   <?php while ($row = mysqli_fetch_assoc($result)) : ?>
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         <div>
           <?php
           $status = $row['status_pembayaran'];
-          $statusClass = match($status) {
+          $statusClass = match ($status) {
             'Menunggu' => 'warning',
             'Disetujui' => 'success',
             'Ditolak' => 'danger',
@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <?php endif; ?>
   </div>
 
-  <?php
+<?php
   exit();
 }
 
@@ -192,12 +192,17 @@ $result = mysqli_query($conn, $sql);
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- CSS yang sudah dimodifikasi untuk responsive -->
   <style>
     body {
       display: flex;
       background-color: #f5f5f5;
       color: #333;
       font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
     .sidebar {
@@ -207,6 +212,10 @@ $result = mysqli_query($conn, $sql);
       padding: 30px 20px;
       height: 100vh;
       position: fixed;
+      z-index: 1001;
+      transition: transform 0.3s ease;
+      left: 0;
+      top: 0;
     }
 
     .sidebar .card-logo {
@@ -249,7 +258,8 @@ $result = mysqli_query($conn, $sql);
     .main {
       margin-left: 200px;
       padding: 40px;
-      width: 100%;
+      width: calc(100% - 200px);
+      min-height: 100vh;
     }
 
     .topbar {
@@ -257,10 +267,13 @@ $result = mysqli_query($conn, $sql);
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 15px;
     }
 
     .input-with-icon {
       position: relative;
+      width: 100%;
       max-width: 300px;
     }
 
@@ -269,6 +282,7 @@ $result = mysqli_query($conn, $sql);
       padding: 10px 40px 10px 16px;
       border-radius: 20px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
     }
 
     .input-with-icon i {
@@ -282,6 +296,7 @@ $result = mysqli_query($conn, $sql);
     .profile {
       display: flex;
       align-items: center;
+      gap: 10px;
     }
 
     .profile span {
@@ -296,25 +311,32 @@ $result = mysqli_query($conn, $sql);
 
     .header-section h2 {
       font-weight: bold;
+      font-size: 1.8rem;
     }
 
-    /* Card Styles - sama seperti dashboard */
+    /* Card Styles */
     .onsite-card {
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
       margin-bottom: 20px;
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 15px;
     }
 
     .onsite-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .onsite-header>div:first-child {
+      flex: 1;
+      min-width: 200px;
     }
 
     .onsite-badge {
@@ -333,6 +355,7 @@ $result = mysqli_query($conn, $sql);
       height: 180px;
       border-radius: 10px;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .onsite-details {
@@ -352,21 +375,41 @@ $result = mysqli_query($conn, $sql);
       padding: 6px 14px;
       border-radius: 30px;
       font-weight: 500;
+      font-size: 0.85rem;
+      white-space: nowrap;
     }
 
-    .badge-status.warning { background-color: #fff4cc; color: #b38f00; }
-    .badge-status.success { background-color: #d4edda; color: #155724; }
-    .badge-status.danger { background-color: #f8d7da; color: #721c24; }
+    .badge-status.warning {
+      background-color: #fff4cc;
+      color: #b38f00;
+    }
+
+    .badge-status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .badge-status.danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .onsite-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
 
     .onsite-files a {
-      margin-right: 10px;
       text-decoration: none;
       color: #0d6efd;
+      font-size: 0.9rem;
     }
 
     .pagination {
       display: flex;
-      justify-content: flex-end;
+      justify-content: right;
       margin-top: 20px;
       gap: 5px;
       flex-wrap: wrap;
@@ -379,6 +422,8 @@ $result = mysqli_query($conn, $sql);
       color: #48cfcb;
       border-radius: 4px;
       text-decoration: none;
+      min-width: 40px;
+      text-align: center;
     }
 
     .pagination a.active {
@@ -391,18 +436,181 @@ $result = mysqli_query($conn, $sql);
       background-color: #ddd;
     }
 
+    /* Mobile Menu Toggle */
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #1c1c1c;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+    /* Sidebar Overlay */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-      .onsite-details { flex-direction: column; }
-      .main { margin-left: 0; padding: 20px; }
-      .sidebar { display: none; }
-      .topbar { flex-direction: column; gap: 15px; }
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px 15px;
+        width: 100%;
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+      }
+
+      .topbar .d-flex {
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .input-with-icon {
+        max-width: 100%;
+        order: 2;
+      }
+
+      .profile {
+        justify-content: flex-end;
+      }
+
+      .header-section h2 {
+        font-size: 1.5rem;
+      }
+
+      .onsite-card {
+        padding: 15px;
+      }
+
+      .onsite-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .onsite-header>div:first-child {
+        min-width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .onsite-details {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .onsite-info {
+        min-width: 100%;
+      }
+
+      .map-box {
+        max-width: 100%;
+        height: 200px;
+      }
+
+      .onsite-files {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .pagination {
+        justify-content: center;
+        margin-top: 15px;
+      }
+
+      .pagination a,
+      .pagination span {
+        padding: 8px 12px;
+        min-width: 35px;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main {
+        padding: 15px 10px;
+      }
+
+      .header-section h2 {
+        font-size: 1.3rem;
+      }
+
+      .onsite-card {
+        padding: 12px;
+      }
+
+      .onsite-header strong {
+        font-size: 0.95rem;
+      }
+
+      .onsite-header small {
+        font-size: 0.8rem;
+      }
+
+      .badge-status {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+      }
+
+      .onsite-badge {
+        padding: 3px 8px;
+        font-size: 0.8rem;
+      }
+
+      .map-box {
+        height: 160px;
+      }
+
+      .pagination a,
+      .pagination span {
+        padding: 6px 8px;
+        min-width: 30px;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
 
 <body>
+  <!-- Overlay untuk mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
     <div class="nav-container">
       <div class="nav-links">
@@ -424,11 +632,23 @@ $result = mysqli_query($conn, $sql);
   <!-- Main Content -->
   <div class="main">
     <div class="topbar">
+      <!-- Mobile menu toggle dan profile dalam satu baris -->
+      <div class="d-flex justify-content-between align-items-center w-100 d-md-none">
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="profile">
+          <span><?= htmlspecialchars($username) ?></span>
+          <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
+        </div>
+      </div>
+
+      <!-- Desktop layout -->
       <div class="input-with-icon">
         <input type="text" placeholder="Cari onsite..." id="search-input" autocomplete="off">
         <i class="bi bi-search"></i>
       </div>
-      <div class="profile">
+      <div class="profile d-none d-md-flex">
         <span><?= htmlspecialchars($username) ?></span>
         <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
       </div>
@@ -450,7 +670,7 @@ $result = mysqli_query($conn, $sql);
             <div>
               <?php
               $status = $row['status_pembayaran'];
-              $statusClass = match($status) {
+              $statusClass = match ($status) {
                 'Menunggu' => 'warning',
                 'Disetujui' => 'success',
                 'Ditolak' => 'danger',
@@ -528,7 +748,6 @@ $result = mysqli_query($conn, $sql);
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Search and pagination functionality
     function loadHistory(page = 1) {
@@ -562,6 +781,72 @@ $result = mysqli_query($conn, $sql);
         e.preventDefault();
         const page = e.target.getAttribute("data-page");
         loadHistory(page);
+      }
+    });
+
+    // Mobile menu functionality
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    mobileMenuToggle?.addEventListener('click', function() {
+      sidebar.classList.add('active');
+      sidebarOverlay.classList.add('active');
+    });
+
+    sidebarOverlay?.addEventListener('click', function() {
+      sidebar.classList.remove('active');
+      sidebarOverlay.classList.remove('active');
+    });
+
+    // Search and pagination functionality
+    function loadHistory(page = 1) {
+      const keyword = document.getElementById("search-input").value;
+      const formData = new FormData();
+      formData.append("search", keyword);
+      formData.append("page", page);
+      formData.append("ajax", "1");
+
+      fetch(window.location.href, {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("data-container").innerHTML = html;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Search input event
+    document.getElementById("search-input").addEventListener("input", function() {
+      loadHistory(1);
+    });
+
+    // Pagination click event
+    document.addEventListener("click", function(e) {
+      if (e.target.classList.contains("pagination-link")) {
+        e.preventDefault();
+        const page = e.target.getAttribute("data-page");
+        loadHistory(page);
+      }
+    });
+
+    // Auto-close sidebar when clicking nav link on mobile
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.nav-links a') && window.innerWidth <= 768) {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+      }
+    });
+
+    // Close sidebar on window resize if mobile
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 768) {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
       }
     });
   </script>

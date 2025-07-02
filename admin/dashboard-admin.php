@@ -9,6 +9,212 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $username = $_SESSION['user'];
+
+// Handle AJAX request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+    $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
+    $page = max((int)($_POST['page'] ?? 1), 1);
+    $records_per_page = 5;
+    $offset = ($page - 1) * $records_per_page;
+
+    // Base query untuk menghitung total data
+    $base_query = "
+        FROM tambah_onsite o
+        LEFT JOIN tim_onsite t ON o.id = t.id_onsite
+        LEFT JOIN anggota a ON t.id_anggota = a.id
+    ";
+
+    $where = "";
+    if (!empty($search)) {
+        $where = "WHERE o.tanggal LIKE '%$search%' 
+               OR o.keterangan_kegiatan LIKE '%$search%' 
+               OR o.status_pembayaran LIKE '%$search%' 
+               OR a.nama LIKE '%$search%'";
+    }
+
+    // Menghitung total data untuk pagination
+    $count_query = "SELECT COUNT(DISTINCT o.id) as total $base_query $where";
+    $count_result = mysqli_query($conn, $count_query);
+    $total_rows = mysqli_fetch_assoc($count_result)['total'];
+    $total_pages = ceil($total_rows / $records_per_page);
+
+    // Query ambil data sesuai halaman
+    $data_query = "
+        SELECT DISTINCT o.* 
+        $base_query 
+        $where 
+        ORDER BY o.id DESC 
+        LIMIT $offset, $records_per_page
+    ";
+    $result = mysqli_query($conn, $data_query);
+    ?>
+
+    <!-- Card Content -->
+    <div id="customAlert" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h5>Konfirmasi</h5>
+            <p>Apakah Anda yakin ingin mengubah status data ini?</p>
+            <div class="text-end mt-3">
+                <button id="cancelBtn" class="btn btn-secondary me-2">Batal</button>
+                <button id="confirmBtn" class="btn btn-primary">Ya, Ubah</button>
+            </div>
+        </div>
+    </div>
+
+    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+        <div class="onsite-card">
+            <div class="onsite-header">
+                <div>
+                    <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+                    <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                </div>
+                <div class="status-section">
+                    <form method="POST" action="ubah-status.php" style="display:inline-block;">
+                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                        <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                            <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+                            <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+                            <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <div class="onsite-details">
+                <div class="onsite-info">
+                    <div><strong>Anggota:</strong><br>
+                        <?php
+                        $id_onsite = $row['id'];
+                        $anggota_result = mysqli_query($conn, "
+                            SELECT a.nama 
+                            FROM tim_onsite t
+                            JOIN anggota a ON t.id_anggota = a.id
+                            WHERE t.id_onsite = $id_onsite
+                        ");
+                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                            echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                        }
+                        ?>
+                    </div>
+                    <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></span></div>
+                    <div class="mt-2 onsite-files">
+                        <?php if (!empty($row['dokumentasi'])): ?>
+                            <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                        <?php endif; ?>
+                        <?php if (!empty($row['file_csv'])): ?>
+                            <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="map-box">
+                    <?php if ($row['latitude'] && $row['longitude']) : ?>
+                        <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    <?php else : ?>
+                        <em>Lokasi tidak tersedia</em>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php endwhile; ?>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <?php if ($page > 1): ?>
+            <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+        <?php endif; ?>
+        <?php
+        $start = max(1, $page - 2);
+        $end = min($total_pages, $page + 2);
+        if ($start > 1) {
+            echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+            if ($start > 2) echo '<span>...</span>';
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $active = ($i == $page) ? 'active' : '';
+            echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+        }
+        if ($end < $total_pages) {
+            if ($end < $total_pages - 1) echo '<span>...</span>';
+            echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+        }
+        ?>
+        <?php if ($page < $total_pages): ?>
+            <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+        <?php endif; ?>
+    </div>
+
+    <script>
+        // Update status & mengubah warna dropdown sesuai status
+        function setupStatusDropdowns() {
+            document.querySelectorAll('.status-dropdown').forEach(select => {
+                updateStatusColor(select);
+                
+                const cloned = select.cloneNode(true);
+                select.parentNode.replaceChild(cloned, select);
+
+                cloned.addEventListener('change', (event) => {
+                    event.preventDefault();
+                    selectedFormToSubmit = cloned.closest('form');
+                    document.getElementById('customAlert').style.display = 'flex';
+                });
+            });
+        }
+
+        // Memberikan warna latar pada <select> sesuai status yang ditentukan
+        function updateStatusColor(select) {
+            const value = select.value;
+            select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+            if (value === 'Disetujui') select.classList.add('bg-success', 'text-white');
+            else if (value === 'Ditolak') select.classList.add('bg-danger', 'text-white');
+            else if (value === 'Menunggu') select.classList.add('bg-warning');
+        }
+
+        // Tombol batal mengubah status
+        document.getElementById('cancelBtn').onclick = () => {
+            document.getElementById('customAlert').style.display = 'none';
+            location.reload();
+        };
+
+        // Tombol konfirmasi mengubah status
+        document.getElementById('confirmBtn').onclick = () => {
+            if (selectedFormToSubmit) {
+                selectedFormToSubmit.submit();
+            }
+        };
+
+        setupStatusDropdowns();
+    </script>
+
+    <?php
+    exit();
+}
+
+// Initial load - get data for first page
+$search = '';
+$page = 1;
+$records_per_page = 5;
+$offset = 0;
+
+$base_query = "
+    FROM tambah_onsite o
+    LEFT JOIN tim_onsite t ON o.id = t.id_onsite
+    LEFT JOIN anggota a ON t.id_anggota = a.id
+";
+
+$count_query = "SELECT COUNT(DISTINCT o.id) as total $base_query";
+$count_result = mysqli_query($conn, $count_query);
+$total_rows = mysqli_fetch_assoc($count_result)['total'];
+$total_pages = ceil($total_rows / $records_per_page);
+
+$data_query = "
+    SELECT DISTINCT o.* 
+    $base_query 
+    ORDER BY o.id DESC 
+    LIMIT $offset, $records_per_page
+";
+$result = mysqli_query($conn, $data_query);
 ?>
 
 <!DOCTYPE html>
@@ -135,13 +341,6 @@ $username = $_SESSION['user'];
             margin: 30px 0 20px;
         }
 
-        .iframe-map {
-            width: 100%;
-            height: 100px;
-            border: 0;
-            border-radius: 6px;
-        }
-
         .pagination {
             display: flex;
             justify-content: flex-end;
@@ -169,78 +368,100 @@ $username = $_SESSION['user'];
             background-color: #ddd;
         }
 
-        .badge {
-            font-size: 0.85rem;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 500;
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
 
-        .table {
-            border-collapse: separate;
-            border-spacing: 0;
+        .modal-box {
+            background: #fff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Card Styles - sama seperti history */
+        .onsite-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .onsite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-section {
+            min-width: 150px;
+        }
+
+        .status-dropdown {
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-weight: 500;
+            border: 1px solid #ddd;
+        }
+
+        .onsite-badge {
+            background-color: #48cfcb;
+            color: #fff;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.85rem;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .map-box {
+            width: 100%;
+            max-width: 300px;
+            height: 180px;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            background-color: white;
         }
 
-        .table th {
-            background-color: #1c1c1c;
-            color: white;
-        }
-
-        .table td {
-            border-bottom: 2px solid #dee2e6;
-            text-align: center;
-        }
-
-        .table tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+        .onsite-details {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 10px;
         }
 
-        .modal-box {
-            background: #fff;
-            padding: 20px 25px;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        .onsite-info {
+            flex: 1;
+            min-width: 250px;
         }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+        .onsite-files a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #0d6efd;
         }
 
-        .modal-box {
-            background: #fff;
-            padding: 20px 25px;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        @media (max-width: 768px) {
+            .onsite-details { flex-direction: column; }
+            .main { margin-left: 0; padding: 20px; }
+            .sidebar { display: none; }
+            .topbar { flex-direction: column; gap: 15px; }
         }
     </style>
 </head>
@@ -274,26 +495,108 @@ $username = $_SESSION['user'];
     </div>
 
     <div class="main">
-        <form onsubmit="return false;" class="search-bar" method="post">
-            <div class="topbar">
-                <div class="input-with-icon">
-                    <input type="text" placeholder="Cari onsite..." name="search" id="search-input-admin" autocomplete="off">
-                    <i class="bi bi-search"></i>
-                </div>
-                <div class="profile">
-                    <span><?= htmlspecialchars($username) ?></span>
-                    <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
-                </div>
+        <div class="topbar">
+            <div class="input-with-icon">
+                <input type="text" placeholder="Cari onsite..." id="search-input-admin" autocomplete="off">
+                <i class="bi bi-search"></i>
             </div>
-        </form>
+            <div class="profile">
+                <span><?= htmlspecialchars($username) ?></span>
+                <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
+            </div>
+        </div>
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> Karyawan</h2>
         </div>
 
-        <div class="table-responsive" id="admin-data-container"></div>
-    </div>
+        <div id="admin-data-container">
+            <!-- Initial card load -->
+            <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                <div class="onsite-card">
+                    <div class="onsite-header">
+                        <div>
+                            <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+                            <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                        </div>
+                        <div class="status-section">
+                            <form method="POST" action="ubah-status.php" style="display:inline-block;">
+                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                                    <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
+                                    <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
+                                    <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
 
+                    <div class="onsite-details">
+                        <div class="onsite-info">
+                            <div><strong>Anggota:</strong><br>
+                                <?php
+                                $id_onsite = $row['id'];
+                                $anggota_result = mysqli_query($conn, "
+                                    SELECT a.nama 
+                                    FROM tim_onsite t
+                                    JOIN anggota a ON t.id_anggota = a.id
+                                    WHERE t.id_onsite = $id_onsite
+                                ");
+                                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                                    echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                                }
+                                ?>
+                            </div>
+                            <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></span></div>
+                            <div class="mt-2 onsite-files">
+                                <?php if (!empty($row['dokumentasi'])): ?>
+                                    <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                                <?php endif; ?>
+                                <?php if (!empty($row['file_csv'])): ?>
+                                    <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="map-box">
+                            <?php if ($row['latitude'] && $row['longitude']) : ?>
+                                <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                                    width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                            <?php else : ?>
+                                <em>Lokasi tidak tersedia</em>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+
+            <!-- Initial Pagination -->
+            <div class="pagination">
+                <?php if ($page > 1): ?>
+                    <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+                <?php endif; ?>
+                <?php
+                $start = max(1, $page - 2);
+                $end = min($total_pages, $page + 2);
+                if ($start > 1) {
+                    echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+                    if ($start > 2) echo '<span>...</span>';
+                }
+                for ($i = $start; $i <= $end; $i++) {
+                    $active = ($i == $page) ? 'active' : '';
+                    echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+                }
+                if ($end < $total_pages) {
+                    if ($end < $total_pages - 1) echo '<span>...</span>';
+                    echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+                }
+                ?>
+                <?php if ($page < $total_pages): ?>
+                    <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Dropdown perubahan status
@@ -303,28 +606,18 @@ $username = $_SESSION['user'];
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
                 updateStatusColor(select);
-                select.addEventListener('change', () => {
-                    selectedFormToSubmit = select.closest('form');
+                
+                const cloned = select.cloneNode(true);
+                select.parentNode.replaceChild(cloned, select);
+
+                cloned.addEventListener('change', (event) => {
+                    event.preventDefault();
+                    selectedFormToSubmit = cloned.closest('form');
                     document.getElementById('customAlert').style.display = 'flex';
                 });
             });
         }
 
-        // Tombol batal mengubah status
-        document.getElementById('cancelBtn').onclick = () => {
-            document.getElementById('customAlert').style.display = 'none';
-            location.reload(); // reset dropdown ke semula
-        };
-
-        // Tombol konfirmasi mengubah status
-        document.getElementById('confirmBtn').onclick = () => {
-            if (selectedFormToSubmit) {
-                selectedFormToSubmit.submit();
-            }
-        };
-    </script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
         // Memberikan warna latar pada <select> sesuai status yang ditentukan
         function updateStatusColor(select) {
             const value = select.value;
@@ -334,48 +627,43 @@ $username = $_SESSION['user'];
             else if (value === 'Menunggu') select.classList.add('bg-warning');
         }
 
-        // Update status & mengubah warna dropdown sesuai status
-        function setupStatusDropdowns() {
-            document.querySelectorAll('.status-dropdown').forEach(select => {
-                updateStatusColor(select);
-
-                const cloned = select.cloneNode(true);
-                select.parentNode.replaceChild(cloned, select);
-
-                cloned.addEventListener('change', (event) => {
-                    event.preventDefault();
-
-                    selectedFormToSubmit = cloned.closest('form');
-                    document.getElementById('customAlert').style.display = 'flex';
-                });
-            });
-        }
-
         // Search seluruh data tanpa me reload halaman
         function loadData(search = '', page = 1) {
-            $.post('search-ajax-admin.php', {
-                search: search,
-                page: page
-            }, function(res) {
-                $('#admin-data-container').html(res);
+            const formData = new FormData();
+            formData.append('search', search);
+            formData.append('page', page);
+            formData.append('ajax', '1');
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('admin-data-container').innerHTML = html;
                 setupStatusDropdowns(); // <== penting!
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
         }
 
         // Otomatis menampilkan data saat halaman dimuat termasuk saat search dan pagination
-        $(document).ready(function() {
-            loadData();
+        document.addEventListener('DOMContentLoaded', function() {
+            setupStatusDropdowns();
 
-            $('#search-input-admin').on('input', function() {
-                const keyword = $(this).val();
+            document.getElementById('search-input-admin').addEventListener('input', function() {
+                const keyword = this.value;
                 loadData(keyword);
             });
 
-            $(document).on('click', '.pagination-link', function(e) {
-                e.preventDefault();
-                const page = $(this).data('page');
-                const keyword = $('#search-input-admin').val();
-                loadData(keyword, page);
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('pagination-link')) {
+                    e.preventDefault();
+                    const page = e.target.getAttribute('data-page');
+                    const keyword = document.getElementById('search-input-admin').value;
+                    loadData(keyword, page);
+                }
             });
         });
 
@@ -395,7 +683,6 @@ $username = $_SESSION['user'];
 
     <!-- Alert saat berhasil login -->
     <?php if (isset($_SESSION['login_success'])): ?>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             Swal.fire({
                 title: 'Login Berhasil',

@@ -239,15 +239,15 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         /* Main Content */
         .main {
             margin-left: 200px;
-            padding: 20px;
-            width: calc(100% - 200px);
-            transition: margin-left 0.3s ease, width 0.3s ease;
+            padding: 40px;
+            width: 85%;
+            /* transition: margin-left 0.3s ease, width 0.3s ease; */
         }
 
-        .main.expanded {
+        /* .main.expanded {
             margin-left: 0;
             width: 100%;
-        }
+        } */
 
         /* Hamburger Menu */
         .hamburger {
@@ -617,41 +617,6 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             <!-- Content will be loaded here via AJAX -->
         </div>
     </div>
-
-    <?php if (isset($_SESSION['login_success'])): ?>
-        <script>
-            Swal.fire({
-                title: 'Login Berhasil',
-                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;">' + <?= json_encode($username) ?> + '</span>',
-                icon: 'success',
-                background: '#1c1c1c',
-                color: '#ffffff',
-                iconColor: '#48cfcb',
-                confirmButtonColor: '#48cfcb',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false
-            });
-        </script>
-        <?php unset($_SESSION['login_success']); ?>
-    <?php endif; ?>
-
-    <?php if (isset($_SESSION['tambah_berhasil'])): ?>
-        <script>
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Data onsite berhasil ditambahkan.',
-                icon: 'success',
-                background: '#1c1c1c',
-                color: '#fff',
-                iconColor: '#48cfcb',
-                confirmButtonColor: '#48cfcb',
-                timer: 2500,
-                showConfirmButton: false
-            });
-        </script>
-        <?php unset($_SESSION['tambah_berhasil']); ?>
-    <?php endif; ?>
 
     <!-- Modal Tambah Data Onsite -->
     <div class="modal fade" id="modalTambahOnsite" tabindex="-1" aria-labelledby="modalTambahOnsiteLabel" aria-hidden="true">
@@ -1242,5 +1207,42 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             });
         }
     </script>
+
+     <?php if (isset($_SESSION['login_success'])): ?>
+        <script>
+            Swal.fire({
+                title: 'Login Berhasil',
+                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;">' + <?= json_encode($username) ?> + '</span>',
+                icon: 'success',
+                background: '#1c1c1c',
+                color: '#ffffff',
+                iconColor: '#48cfcb',
+                confirmButtonColor: '#48cfcb',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        </script>
+        <?php unset($_SESSION['login_success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['tambah_berhasil'])): ?>
+        <script>
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Data onsite berhasil ditambahkan.',
+                icon: 'success',
+                background: '#1c1c1c',
+                color: '#fff',
+                iconColor: '#48cfcb',
+                confirmButtonColor: '#48cfcb',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        </script>
+        <?php unset($_SESSION['tambah_berhasil']); ?>
+    <?php endif; ?>
+
 </body>
+
 </html>
