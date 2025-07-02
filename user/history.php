@@ -9,6 +9,176 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $username = $_SESSION['user'];
+$user_id = $_SESSION['user_id'];
+
+// Handle AJAX request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+  $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
+  $page = max((int)($_POST['page'] ?? 1), 1);
+  $limit = 5;
+  $offset = ($page - 1) * $limit;
+
+  // Hitung total data untuk pagination
+  $count_sql = "
+    SELECT COUNT(DISTINCT to1.id) as total
+    FROM tambah_onsite to1
+    LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+    LEFT JOIN anggota a ON t.id_anggota = a.id
+    WHERE to1.user_id = $user_id 
+      AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+      AND (
+        to1.tanggal LIKE '%$search%' 
+        OR to1.keterangan_kegiatan LIKE '%$search%'
+        OR a.nama LIKE '%$search%'
+      )
+  ";
+
+  $total_result = mysqli_query($conn, $count_sql);
+  $total_rows = mysqli_fetch_assoc($total_result)['total'];
+  $total_pages = ceil($total_rows / $limit);
+
+  // Ambil data berdasarkan pencarian & halaman
+  $sql = "
+    SELECT DISTINCT to1.* 
+    FROM tambah_onsite to1
+    LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+    LEFT JOIN anggota a ON t.id_anggota = a.id
+    WHERE to1.user_id = $user_id 
+      AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+      AND (
+        to1.tanggal LIKE '%$search%' 
+        OR to1.keterangan_kegiatan LIKE '%$search%'
+        OR a.nama LIKE '%$search%'
+      )
+    ORDER BY to1.id DESC
+    LIMIT $offset, $limit
+  ";
+
+  $result = mysqli_query($conn, $sql);
+  ?>
+
+  <!-- Card Content -->
+  <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+    <div class="onsite-card">
+      <div class="onsite-header">
+        <div>
+          <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+          <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+        </div>
+        <div>
+          <?php
+          $status = $row['status_pembayaran'];
+          $statusClass = match($status) {
+            'Menunggu' => 'warning',
+            'Disetujui' => 'success',
+            'Ditolak' => 'danger',
+            default => 'secondary'
+          };
+          ?>
+          <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+        </div>
+      </div>
+
+      <div class="onsite-details">
+        <div class="onsite-info">
+          <div><strong>Anggota:</strong><br>
+            <?php
+            $id_onsite = $row['id'];
+            $anggota_result = mysqli_query($conn, "
+              SELECT a.nama 
+              FROM tim_onsite t
+              JOIN anggota a ON t.id_anggota = a.id
+              WHERE t.id_onsite = $id_onsite
+            ");
+            while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+              echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+            }
+            ?>
+          </div>
+          <div class="mt-2"><strong>Biaya:</strong> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+          <div class="mt-2 onsite-files">
+            <?php if (!empty($row['dokumentasi'])): ?>
+              <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+            <?php endif; ?>
+            <?php if (!empty($row['file_csv'])): ?>
+              <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <div class="map-box">
+          <?php if ($row['latitude'] && $row['longitude']) : ?>
+            <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+              width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+          <?php else : ?>
+            <em>Lokasi tidak tersedia</em>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  <?php endwhile; ?>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <?php if ($page > 1): ?>
+      <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+    <?php endif; ?>
+    <?php
+    $start = max(1, $page - 2);
+    $end = min($total_pages, $page + 2);
+    if ($start > 1) {
+      echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+      if ($start > 2) echo '<span>...</span>';
+    }
+    for ($i = $start; $i <= $end; $i++) {
+      $active = ($i == $page) ? 'active' : '';
+      echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+    }
+    if ($end < $total_pages) {
+      if ($end < $total_pages - 1) echo '<span>...</span>';
+      echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+    }
+    ?>
+    <?php if ($page < $total_pages): ?>
+      <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+    <?php endif; ?>
+  </div>
+
+  <?php
+  exit();
+}
+
+// Initial load - get data for first page
+$search = '';
+$page = 1;
+$limit = 5;
+$offset = 0;
+
+$count_sql = "
+  SELECT COUNT(DISTINCT to1.id) as total
+  FROM tambah_onsite to1
+  LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+  LEFT JOIN anggota a ON t.id_anggota = a.id
+  WHERE to1.user_id = $user_id 
+    AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+";
+
+$total_result = mysqli_query($conn, $count_sql);
+$total_rows = mysqli_fetch_assoc($total_result)['total'];
+$total_pages = ceil($total_rows / $limit);
+
+$sql = "
+  SELECT DISTINCT to1.* 
+  FROM tambah_onsite to1
+  LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
+  LEFT JOIN anggota a ON t.id_anggota = a.id
+  WHERE to1.user_id = $user_id 
+    AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
+  ORDER BY to1.id DESC
+  LIMIT $offset, $limit
+";
+
+$result = mysqli_query($conn, $sql);
 ?>
 
 <!DOCTYPE html>
@@ -16,6 +186,7 @@ $username = $_SESSION['user'];
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>History User - ACTIVin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -24,44 +195,24 @@ $username = $_SESSION['user'];
   <style>
     body {
       display: flex;
-      background: #f5f5f5;
+      background-color: #f5f5f5;
+      color: #333;
       font-family: 'Inter', sans-serif;
     }
 
     .sidebar {
       width: 200px;
-      background-color: #1c1c1c;
-      color: white;
+      background: #1c1c1c;
+      color: #fff;
       padding: 30px 20px;
       height: 100vh;
       position: fixed;
-      display: flex;
-      flex-direction: column;
     }
 
     .sidebar .card-logo {
       width: 100%;
       height: auto;
       margin-bottom: 28px;
-    }
-
-    .sidebar h2 {
-      font-size: 25px;
-      font-weight: bold;
-      margin-bottom: 40px;
-    }
-
-    .header-section {
-      margin: 30px 0 20px;
-    }
-
-    .profile {
-      display: flex;
-      align-items: center;
-    }
-
-    .profile strong {
-      padding-right: 5px;
     }
 
     .nav-container {
@@ -75,22 +226,23 @@ $username = $_SESSION['user'];
     .logout-link a {
       display: block;
       color: white;
+      text-decoration: none;
       margin: 15px 0;
       padding: 10px;
       border-radius: 8px;
-      text-decoration: none;
-    }
-
-    .logout-link a:hover {
-      background-color: red;
-      color: white;
-      font-weight: bold;
+      transition: background 0.3s;
     }
 
     .nav-links a.active,
     .nav-links a:hover {
-      background: #48cfcb;
-      color: black;
+      background-color: #48cfcb;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .logout-link a:hover {
+      background-color: red;
+      color: #fff;
       font-weight: bold;
     }
 
@@ -127,6 +279,91 @@ $username = $_SESSION['user'];
       color: #888;
     }
 
+    .profile {
+      display: flex;
+      align-items: center;
+    }
+
+    .profile span {
+      color: #1c1c1c;
+      padding: 5px;
+      font-weight: bold;
+    }
+
+    .header-section {
+      margin: 30px 0 20px;
+    }
+
+    .header-section h2 {
+      font-weight: bold;
+    }
+
+    /* Card Styles - sama seperti dashboard */
+    .onsite-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .onsite-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .onsite-badge {
+      background-color: #48cfcb;
+      color: #fff;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.85rem;
+      margin: 2px;
+      display: inline-block;
+    }
+
+    .map-box {
+      width: 100%;
+      max-width: 300px;
+      height: 180px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .onsite-details {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .onsite-info {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .badge-status {
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: 500;
+    }
+
+    .badge-status.warning { background-color: #fff4cc; color: #b38f00; }
+    .badge-status.success { background-color: #d4edda; color: #155724; }
+    .badge-status.danger { background-color: #f8d7da; color: #721c24; }
+
+    .onsite-files a {
+      margin-right: 10px;
+      text-decoration: none;
+      color: #0d6efd;
+    }
+
     .pagination {
       display: flex;
       justify-content: flex-end;
@@ -145,29 +382,26 @@ $username = $_SESSION['user'];
     }
 
     .pagination a.active {
-      background: #48cfcb;
+      background-color: #48cfcb;
       color: white;
+      border-color: #48cfcb;
     }
 
-    .table {
-      background: white;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
+    .pagination a:hover:not(.active) {
+      background-color: #ddd;
     }
 
-    .table th {
-      background: #1c1c1c;
-      color: white;
-      text-align: center;
-    }
-
-    .table td {
-      text-align: center;
+    @media (max-width: 768px) {
+      .onsite-details { flex-direction: column; }
+      .main { margin-left: 0; padding: 20px; }
+      .sidebar { display: none; }
+      .topbar { flex-direction: column; gap: 15px; }
     }
   </style>
 </head>
 
 <body>
+  <!-- Sidebar -->
   <div class="sidebar">
     <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
     <div class="nav-container">
@@ -179,56 +413,150 @@ $username = $_SESSION['user'];
           <i class="bi bi-clock-history"></i> History
         </a>
       </div>
-      <div class="logout-link"><a href="../logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a></div>
+      <div class="logout-link">
+        <a href="../logout.php">
+          <i class="bi bi-box-arrow-left"></i> Logout
+        </a>
+      </div>
     </div>
   </div>
 
+  <!-- Main Content -->
   <div class="main">
     <div class="topbar">
       <div class="input-with-icon">
-        <input type="text" id="search-input" placeholder="Cari onsite...">
+        <input type="text" placeholder="Cari onsite..." id="search-input" autocomplete="off">
         <i class="bi bi-search"></i>
       </div>
       <div class="profile">
-        <strong><?= htmlspecialchars($username) ?></strong>
+        <span><?= htmlspecialchars($username) ?></span>
         <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
       </div>
     </div>
 
     <div class="header-section">
-      <h2 style="font-weight: bold;">History <span style="color: #48cfcb;">Onsite</span></h2>
+      <h2>History <span style="color: #48cfcb;">Onsite</span></h2>
     </div>
 
-    <div class="table-responsive" id="data-container">
-      <?php include 'history-search.php'; ?>
+    <div id="data-container">
+      <!-- Initial card load -->
+      <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+        <div class="onsite-card">
+          <div class="onsite-header">
+            <div>
+              <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+              <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+            </div>
+            <div>
+              <?php
+              $status = $row['status_pembayaran'];
+              $statusClass = match($status) {
+                'Menunggu' => 'warning',
+                'Disetujui' => 'success',
+                'Ditolak' => 'danger',
+                default => 'secondary'
+              };
+              ?>
+              <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+            </div>
+          </div>
+
+          <div class="onsite-details">
+            <div class="onsite-info">
+              <div><strong>Anggota:</strong><br>
+                <?php
+                $id_onsite = $row['id'];
+                $anggota_result = mysqli_query($conn, "
+                  SELECT a.nama 
+                  FROM tim_onsite t
+                  JOIN anggota a ON t.id_anggota = a.id
+                  WHERE t.id_onsite = $id_onsite
+                ");
+                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                  echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                }
+                ?>
+              </div>
+              <div class="mt-2"><strong>Biaya:</strong> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+              <div class="mt-2 onsite-files">
+                <?php if (!empty($row['dokumentasi'])): ?>
+                  <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                <?php endif; ?>
+                <?php if (!empty($row['file_csv'])): ?>
+                  <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+                <?php endif; ?>
+              </div>
+            </div>
+
+            <div class="map-box">
+              <?php if ($row['latitude'] && $row['longitude']) : ?>
+                <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                  width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+              <?php else : ?>
+                <em>Lokasi tidak tersedia</em>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+      <?php endwhile; ?>
+
+      <!-- Initial Pagination -->
+      <div class="pagination">
+        <?php if ($page > 1): ?>
+          <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+        <?php endif; ?>
+        <?php
+        $start = max(1, $page - 2);
+        $end = min($total_pages, $page + 2);
+        if ($start > 1) {
+          echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+          if ($start > 2) echo '<span>...</span>';
+        }
+        for ($i = $start; $i <= $end; $i++) {
+          $active = ($i == $page) ? 'active' : '';
+          echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+        }
+        if ($end < $total_pages) {
+          if ($end < $total_pages - 1) echo '<span>...</span>';
+          echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+        }
+        ?>
+        <?php if ($page < $total_pages): ?>
+          <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+        <?php endif; ?>
+      </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Pagination & search real time
-
-    // Search history data user tanpa me reload halaman
+    // Search and pagination functionality
     function loadHistory(page = 1) {
       const keyword = document.getElementById("search-input").value;
       const formData = new FormData();
       formData.append("search", keyword);
       formData.append("page", page);
+      formData.append("ajax", "1");
 
-      fetch("history-search.php", {
+      fetch(window.location.href, {
           method: "POST",
           body: formData
         })
         .then(res => res.text())
         .then(html => {
           document.getElementById("data-container").innerHTML = html;
+        })
+        .catch(error => {
+          console.error('Error:', error);
         });
     }
 
+    // Search input event
     document.getElementById("search-input").addEventListener("input", function() {
       loadHistory(1);
     });
 
-    // Klik pagination
+    // Pagination click event
     document.addEventListener("click", function(e) {
       if (e.target.classList.contains("pagination-link")) {
         e.preventDefault();
