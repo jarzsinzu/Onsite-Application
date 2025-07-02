@@ -7,7 +7,6 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Pagination
 $current_page = basename($_SERVER['PHP_SELF']);
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $records_per_page = 5;
@@ -16,15 +15,16 @@ $offset = ($page - 1) * $records_per_page;
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['user'];
 
-// Menghitung jumlah data onsite user
 $count_query = "SELECT COUNT(*) as total FROM tambah_onsite WHERE user_id = $user_id";
 $count_result = mysqli_query($conn, $count_query);
 $total_rows = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_rows / $records_per_page);
 
-// Mengambil data onsite sesuai halaman
 $query = "SELECT * FROM tambah_onsite WHERE user_id = $user_id ORDER BY id DESC LIMIT $offset, $records_per_page";
 $result = mysqli_query($conn, $query);
+
+$anggota_result = mysqli_query($conn, "SELECT id, nama FROM anggota");
+$anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -39,7 +39,7 @@ $result = mysqli_query($conn, $query);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         body {
             display: flex;
@@ -63,11 +63,56 @@ $result = mysqli_query($conn, $query);
             margin-bottom: 28px;
         }
 
-        .sidebar h2 {
-            font-size: 25px;
-            font-weight: bold;
-            margin-bottom: 40px;
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            gap: 5px;
+            flex-wrap: wrap;
         }
+
+        .pagination a,
+        .pagination span {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            color: #48cfcb;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .pagination a.active {
+            background-color: #48cfcb;
+            color: white;
+            border-color: #48cfcb;
+        }
+
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        .table th {
+            background-color: #1c1c1c;
+            color: white;
+        }
+
+        .table td {
+            border-bottom: 2px solid #dee2e6;
+            text-align: center;
+        }
+
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+
 
         .nav-container {
             display: flex;
@@ -151,91 +196,47 @@ $result = mysqli_query($conn, $query);
             margin: 30px 0 20px;
         }
 
-        .header-section a {
+        .header-section button {
             background-color: #48cfcb;
             border: none;
             padding: 10px 20px;
             border-radius: 8px;
             color: white;
             font-weight: 600;
-            text-decoration: none;
         }
 
-        .header-section a:hover {
+        .header-section button:hover {
             background-color: #229799;
         }
 
-        .iframe-map {
-            width: 100%;
-            height: 100px;
-            border: 0;
-            border-radius: 6px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 6px 12px;
-            border: 1px solid #ddd;
-            color: #48cfcb;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-
-        .pagination a.active {
-            background-color: #48cfcb;
-            color: white;
-            border-color: #48cfcb;
-        }
-
-        .pagination a:hover:not(.active) {
-            background-color: #ddd;
-        }
-
-        .pagination span.disabled {
-            padding: 6px 12px;
-            border: 1px solid #ddd;
-            color: #aaa;
-            border-radius: 4px;
-            text-decoration: none;
-            cursor: not-allowed;
-        }
-
         .badge {
-            font-size: 0.85rem;
-            padding: 6px 12px;
+            font-size: 0.9rem;
+            padding: 8px 12px;
             border-radius: 20px;
-            font-weight: 500;
         }
 
-        .table {
-            border-collapse: separate;
-            border-spacing: 0;
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-content {
             border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            background-color: white;
         }
 
-        .table th {
-            background-color: #1c1c1c;
-            color: white;
+        .modal-footer .btn {
+            min-width: 110px;
         }
 
-        .table td {
-            border-bottom: 2px solid #dee2e6;
-            text-align: center;
-        }
+        @media (max-width: 576px) {
+            .modal-footer {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
 
-        .table tr:hover {
-            background-color: #f8f9fa;
+            .modal-footer .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -257,7 +258,6 @@ $result = mysqli_query($conn, $query);
             </div>
         </div>
     </div>
-
     <div class="main">
         <form class="search-bar" method="post">
             <div class="topbar">
@@ -274,67 +274,19 @@ $result = mysqli_query($conn, $query);
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span></h2>
-            <a href="tambah-data.php" class="btn-tambah">+ Tambah Data Onsite</a>
+            <button type="button" class="btn-tambah" data-bs-toggle="modal" data-bs-target="#modalTambahOnsite">+ Tambah Data Onsite</button>
         </div>
+
         <div class="table-responsive" id="data-container">
             <?php include 'search-ajax-user.php'; ?>
         </div>
     </div>
 
-    <script>
-        // Pagination & search realtime
-
-        // Search data user tanpa me reload halaman
-        function loadPage(page) {
-            const keyword = document.getElementById("search-input").value;
-            const formData = new FormData();
-            formData.append("search", keyword);
-            formData.append("page", page);
-
-            fetch("search-ajax-user.php", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("data-container").innerHTML = html;
-                });
-        }
-
-        document.getElementById("search-input").addEventListener("input", function() {
-            loadPage(1);
-        });
-
-        // Klik pagination
-        document.addEventListener("click", function(e) {
-            if (e.target.classList.contains("pagination-link")) {
-                e.preventDefault();
-                const page = e.target.getAttribute("data-page");
-                const keyword = document.getElementById("search-input").value;
-
-                const formData = new FormData();
-                formData.append("page", page);
-                formData.append("search", keyword);
-
-                fetch("search-ajax-user.php", {
-                        method: "POST",
-                        body: formData
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        document.getElementById("data-container").innerHTML = html;
-                    });
-            }
-        });
-    </script>
-
-    <!-- Alert saat berhasil login -->
     <?php if (isset($_SESSION['login_success'])): ?>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             Swal.fire({
                 title: 'Login Berhasil',
-                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;"><?= htmlspecialchars($username) ?></span>',
+                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;">' + <?= json_encode($username) ?> + '</span>',
                 icon: 'success',
                 background: '#1c1c1c',
                 color: '#ffffff',
@@ -342,17 +294,12 @@ $result = mysqli_query($conn, $query);
                 confirmButtonColor: '#48cfcb',
                 timer: 3000,
                 timerProgressBar: true,
-                showConfirmButton: false,
-                didOpen: () => {
-                    const content = Swal.getHtmlContainer()
-                    content.style.fontSize = '16px';
-                }
+                showConfirmButton: false
             });
         </script>
         <?php unset($_SESSION['login_success']); ?>
     <?php endif; ?>
 
-    <!-- Alert saat berhasil menambah data onsite baru -->
     <?php if (isset($_SESSION['tambah_berhasil'])): ?>
         <script>
             Swal.fire({
@@ -369,6 +316,225 @@ $result = mysqli_query($conn, $query);
         </script>
         <?php unset($_SESSION['tambah_berhasil']); ?>
     <?php endif; ?>
+
+    <!-- Modal Tambah Data Onsite -->
+    <div class="modal fade" id="modalTambahOnsite" tabindex="-1" aria-labelledby="modalTambahOnsiteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title" id="modalTambahOnsiteLabel">Form Tambah Data Onsite</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="container-fluid">
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Pilih Anggota Tim</label>
+                                <input type="text" id="anggota-input" class="form-control" placeholder="Ketik untuk cari anggota...">
+                                <div id="anggota-list" class="mt-2 border rounded p-2" style="max-height: 150px; overflow-y: auto;"></div>
+                                <div id="anggota-terpilih" class="mt-3"></div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tanggal</label>
+                                    <input type="date" name="tanggal" id="tanggal" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Estimasi Biaya</label>
+                                    <input type="number" name="estimasi_biaya" class="form-control" placeholder="Rp" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Jam Mulai</label>
+                                    <input type="time" name="jam_mulai" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Jam Selesai</label>
+                                    <input type="time" name="jam_selesai" class="form-control" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Preview Lokasi</label>
+                                    <small class="form-text text-muted d-block mb-2" id="lokasi-status">Mendeteksi lokasi...</small>
+                                    <iframe id="mapPreview" class="w-100" style="height: 210px; border: 1px solid #ccc; border-radius: 8px;"></iframe>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Keterangan Kegiatan</label>
+                                    <textarea name="keterangan_kegiatan" class="form-control" rows="3" required></textarea>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Upload Dokumentasi (PDF/JPG/PNG)</label>
+                                    <input type="file" name="dokumentasi" accept=".pdf,.jpg,.jpeg,.png" class="form-control">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Upload File CSV (.csv)</label>
+                                    <input type="file" name="file_csv" accept=".csv" class="form-control">
+                                </div>
+
+                                <input type="hidden" name="latitude" id="latitude">
+                                <input type="hidden" name="longitude" id="longitude">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="simpan" class="btn btn-info text-white px-4">
+                                <i class="bi bi-save me-1"></i> Simpan
+                            </button>
+                            <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i> Batal
+                            </button>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="../template/template_onsite.csv" class="btn btn-success px-4">
+                                <i class="bi bi-download me-1"></i> Download Template CSV
+                            </a>
+                        </div>
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script tambahan dari form -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("search-input");
+            const dataContainer = document.getElementById("data-container");
+
+            function fetchData(page = 1, keyword = "") {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "search-ajax-user.php", true);
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        dataContainer.innerHTML = xhr.responseText;
+                    }
+                };
+
+                xhr.send("page=" + page + "&search=" + encodeURIComponent(keyword));
+            }
+
+            // Handle pagination click
+            dataContainer.addEventListener("click", function(e) {
+                if (e.target.classList.contains("pagination-link")) {
+                    e.preventDefault();
+                    const page = e.target.getAttribute("data-page");
+                    const keyword = searchInput.value;
+                    fetchData(page, keyword);
+                }
+            });
+
+            // Handle search input
+            searchInput.addEventListener("input", function() {
+                fetchData(1, this.value);
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const tanggalInput = document.getElementById("tanggal");
+            const today = new Date().toISOString().split('T')[0];
+            tanggalInput.setAttribute("min", today);
+        });
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById("lokasi-status").innerText = "Geolocation tidak didukung oleh browser Anda.";
+            }
+        }
+
+        function showPosition(pos) {
+            let lat = pos.coords.latitude;
+            let lon = pos.coords.longitude;
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lon;
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lon}&hl=id&z=15&output=embed`;
+            document.getElementById("mapPreview").src = mapUrl;
+            document.getElementById("lokasi-status").textContent = "Lokasi berhasil dideteksi.";
+        }
+
+        function showError() {
+            document.getElementById("lokasi-status").textContent = "Gagal mendeteksi lokasi.";
+        }
+
+        document.addEventListener("DOMContentLoaded", getLocation);
+
+        const anggotaData = <?= json_encode(mysqli_fetch_all(mysqli_query($conn, "SELECT id, nama FROM anggota"), MYSQLI_ASSOC)); ?>;
+        const anggotaInput = document.getElementById('anggota-input');
+        const anggotaList = document.getElementById('anggota-list');
+        const anggotaTerpilih = document.getElementById('anggota-terpilih');
+        let selectedAnggota = [];
+
+        function renderList(filtered) {
+            anggotaList.innerHTML = '';
+            filtered.forEach(a => {
+                if (!selectedAnggota.find(item => item.id == a.id)) {
+                    const div = document.createElement('div');
+                    div.textContent = a.nama;
+                    div.className = 'p-1 anggota-item hover-bg';
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => tambahAnggota(a);
+                    anggotaList.appendChild(div);
+                }
+            });
+        }
+
+        function tambahAnggota(anggota) {
+            selectedAnggota.push(anggota);
+            updateBadge();
+            anggotaInput.value = '';
+            renderList(anggotaData);
+        }
+
+        function hapusAnggota(id) {
+            selectedAnggota = selectedAnggota.filter(a => a.id != id);
+            updateBadge();
+            renderList(anggotaData);
+        }
+
+        function updateBadge() {
+            anggotaTerpilih.innerHTML = '';
+            selectedAnggota.forEach(a => {
+                const span = document.createElement('span');
+                span.className = 'badge bg-info text-white me-1 mb-1';
+                span.innerText = a.nama;
+                span.onclick = () => hapusAnggota(a.id);
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'anggota_ids[]';
+                hidden.value = a.id;
+
+                anggotaTerpilih.appendChild(span);
+                anggotaTerpilih.appendChild(hidden);
+            });
+        }
+
+        anggotaInput.addEventListener('input', () => {
+            const keyword = anggotaInput.value.toLowerCase();
+            const filtered = anggotaData.filter(a => a.nama.toLowerCase().includes(keyword));
+            renderList(filtered);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderList(anggotaData);
+        });
+    </script>
 
 </body>
 

@@ -57,7 +57,7 @@ $result = mysqli_query($conn, $data_query);
 ?>
 
 
-<table class="table table-bordered align-middle table-rounded">
+<table class="table table-bordered align-middle table-rounded rounded-4 overflow-hidden shadow">
     <thead class="table-dark">
         <tr style="text-align: center;">
             <th style="width: 120px;">Anggota</th>
@@ -134,41 +134,29 @@ $result = mysqli_query($conn, $data_query);
 
 <!-- Pagination -->
 <div class="pagination">
-    <?php if ($total_pages > 1): ?>
-        <!-- Halaman pertama -->
-        <?php if ($page > 1): ?>
-            <a href="#" class="pagination-link" data-page="1">&laquo;</a>
-        <?php else: ?>
-            <span class="disabled">&laquo;</span>
-        <?php endif; ?>
-
-        <!-- Menentukan rentang halaman -->
-        <?php
-        $range = 2;
-        $start = max(1, $page - $range);
-        $end = min($total_pages, $page + $range);
-
-        if ($start > 1) {
-            echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-            if ($start > 2) echo '<span>...</span>';
-        }
-
-        for ($i = $start; $i <= $end; $i++) {
-            $active = $i == $page ? 'active' : '';
-            echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
-        }
-
-        if ($end < $total_pages) {
-            if ($end < $total_pages - 1) echo '<span>...</span>';
-            echo "<a href='#' class='pagination-link' data-page='$total_pages'>$total_pages</a>";
-        }
-        ?>
-
-        <!-- Halaman terakhir -->
-        <?php if ($page < $total_pages): ?>
-            <a href="#" class="pagination-link" data-page="<?= $total_pages ?>">&raquo;</a>
-        <?php else: ?>
-            <span class="disabled">&raquo;</span>
-        <?php endif; ?>
+    <?php if ($page > 1): ?>
+        <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+    <?php endif; ?>
+    <!-- Menentukan batas awal dan akhir nomor halaman -->
+    <?php
+    $start = max(1, $page - 2);
+    $end = min($total_pages, $page + 2);
+    // Halaman pertama
+    if ($start > 1) {
+        echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+        if ($start > 2) echo '<span>...</span>';
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? 'active' : '';
+        echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+    }
+    // Halaman akhir
+    if ($end < $total_pages) {
+        if ($end < $total_pages - 1) echo '<span>...</span>';
+        echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+    }
+    ?>
+    <?php if ($page < $total_pages): ?>
+        <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
     <?php endif; ?>
 </div>

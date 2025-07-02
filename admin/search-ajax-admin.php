@@ -40,7 +40,7 @@ $result = mysqli_query($conn, $data_query);
 ?>
 
 
-<table class="table table-bordered align-middle table-rounded">
+<table class="table table-bordered align-middle table-rounded rounded-4 overflow-hidden shadow">
     <thead class="table-dark">
         <tr style="text-align: center;">
             <th style="width: 120px;">Anggota</th>
