@@ -49,18 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     $result = mysqli_query($conn, $data_query);
 ?>
 
-    <!-- Card Content -->
-    <div id="customAlert" class="modal-overlay" style="display: none;">
-        <div class="modal-box">
-            <h5>Konfirmasi</h5>
-            <p>Apakah Anda yakin ingin mengubah status data ini?</p>
-            <div class="text-end mt-3">
-                <button id="cancelBtn" class="btn btn-secondary me-2">Batal</button>
-                <button id="confirmBtn" class="btn btn-primary">Ya, Ubah</button>
-            </div>
-        </div>
-    </div>
-
     <?php while ($row = mysqli_fetch_assoc($result)) : ?>
         <div class="onsite-card">
             <div class="onsite-header">
@@ -150,15 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
                 updateStatusColor(select);
-
-                const cloned = select.cloneNode(true);
-                select.parentNode.replaceChild(cloned, select);
-
-                cloned.addEventListener('change', (event) => {
-                    event.preventDefault();
-                    selectedFormToSubmit = cloned.closest('form');
-                    document.getElementById('customAlert').style.display = 'flex';
-                });
             });
         }
 
@@ -408,69 +387,90 @@ $result = mysqli_query($conn, $data_query);
         .onsite-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            /* Ubah dari center ke flex-start agar dropdown sejajar dengan judul */
             flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
-        .status-section {
-            min-width: 150px;
+        .onsite-header>div:first-child {
+            flex: 1;
+            min-width: 0;
+            /* Untuk text truncation jika perlu */
+            padding-right: 15px;
+            /* Tambahkan padding kanan untuk spacing */
         }
 
-        /* CSS untuk dropdown status - PERBAIKAN */
         .status-section {
             min-width: 120px;
-            /* Kurangi dari 150px */
             max-width: 140px;
-            /* Batasi maksimal width */
+            flex-shrink: 0;
+            /* Prevent shrinking */
+            align-self: flex-start;
+            /* Pastikan dropdown di atas sejajar dengan judul */
         }
 
+
+        /* Perbaikan untuk dropdown status - hilangkan panah ganda */
         .status-dropdown {
             border-radius: 15px;
-            /* Kurangi dari 20px */
-            padding: 4px 8px;
-            /* Kurangi padding */
+            padding: 6px 10px;
             font-weight: 500;
             border: 1px solid #ddd;
             font-size: 0.85rem;
-            /* Kurangi ukuran font */
             width: 100%;
             max-width: 120px;
-            height: auto;
-            /* Pastikan height otomatis */
+            height: 32px;
             line-height: 1.2;
-            /* Kurangi line-height */
 
-            /* Pastikan dropdown tidak menampilkan multiple options */
-            appearance: auto;
-            -webkit-appearance: menulist;
-            -moz-appearance: menulist;
+            /* Hilangkan appearance default browser */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+
+            /* Tambahkan custom arrow */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 8px center;
+            background-repeat: no-repeat;
+            background-size: 16px 12px;
+            padding-right: 32px;
+            /* Beri ruang untuk custom arrow */
         }
 
         /* Styling untuk option dalam dropdown */
         .status-dropdown option {
-            padding: 2px 4px;
+            padding: 4px 8px;
             font-size: 0.85rem;
             line-height: 1.2;
+            background-color: white;
+            color: #333;
         }
 
-        /* Warna background sesuai status */
+        /* Warna background sesuai status dengan custom arrow yang sesuai */
         .status-dropdown.bg-success {
             background-color: #198754 !important;
             color: white !important;
             border-color: #198754;
+            /* Custom arrow putih untuk background hijau */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
 
         .status-dropdown.bg-danger {
             background-color: #dc3545 !important;
             color: white !important;
             border-color: #dc3545;
+            /* Custom arrow putih untuk background merah */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
 
         .status-dropdown.bg-warning {
             background-color: #ffc107 !important;
             color: #000 !important;
             border-color: #ffc107;
+            /* Custom arrow hitam untuk background kuning */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
+
 
         .onsite-badge {
             background-color: #48cfcb;
@@ -594,70 +594,71 @@ $result = mysqli_query($conn, $data_query);
             .onsite-header {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 10px;
             }
 
             .onsite-header>div:first-child {
-                min-width: 100%;
-                margin-bottom: 10px;
+                width: 100%;
+                margin-bottom: 8px;
+
+                .onsite-details {
+                    flex-direction: column;
+                    gap: 15px;
+                }
+
+                .onsite-info {
+                    min-width: 100%;
+                }
+
+                .map-box {
+                    max-width: 100%;
+                    height: 200px;
+                }
+
+                .onsite-files {
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                .pagination {
+                    justify-content: center;
+                    margin-top: 15px;
+                }
+
+                .pagination a,
+                .pagination span {
+                    padding: 8px 12px;
+                    min-width: 35px;
+                    font-size: 0.9rem;
+                }
             }
 
-            .onsite-details {
+            .status-section {
+                width: 100%;
+                max-width: 150px;
+                margin-left: 0;
+            }
+
+            .status-dropdown {
+                max-width: 130px;
+                font-size: 0.8rem;
+                padding: 4px 8px;
+            }
+
+            .onsite-header {
                 flex-direction: column;
-                gap: 15px;
+                align-items: flex-start;
+                gap: 10px;
             }
 
-            .onsite-info {
-                min-width: 100%;
+            .onsite-header>div:first-child {
+                width: 100%;
             }
 
-            .map-box {
-                max-width: 100%;
-                height: 200px;
+            .status-section {
+                width: 100%;
+                max-width: 120px;
             }
-
-            .onsite-files {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .pagination {
-                justify-content: center;
-                margin-top: 15px;
-            }
-
-            .pagination a,
-            .pagination span {
-                padding: 8px 12px;
-                min-width: 35px;
-                font-size: 0.9rem;
-            }
-        }
-
-        .status-section {
-            min-width: 100px;
-            max-width: 110px;
-        }
-
-        .status-dropdown {
-            font-size: 0.8rem;
-            padding: 3px 6px;
-            max-width: 100px;
-            border-radius: 12px;
-        }
-
-        .onsite-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .onsite-header>div:first-child {
-            width: 100%;
-        }
-
-        .status-section {
-            width: 100%;
-            max-width: 120px;
         }
 
         /* Perbaikan CSS untuk mobile sidebar */
@@ -726,11 +727,17 @@ $result = mysqli_query($conn, $data_query);
             }
         }
 
+        /* Responsive untuk mobile */
         @media (max-width: 480px) {
             .status-dropdown {
                 font-size: 0.75rem;
-                padding: 2px 4px;
-                max-width: 90px;
+                padding: 3px 6px;
+                padding-right: 28px;
+                /* Sesuaikan dengan ukuran yang lebih kecil */
+                max-width: 110px;
+                height: 28px;
+                background-size: 14px 10px;
+                background-position: right 6px center;
             }
         }
     </style>
@@ -919,55 +926,7 @@ $result = mysqli_query($conn, $data_query);
         // Dropdown perubahan status
         let selectedFormToSubmit = null;
 
-        // Update status & mengubah warna dropdown sesuai status
-        // Perbaikan JavaScript untuk dropdown status
-        function updateStatusColor(select) {
-            const value = select.value;
-
-            // Hapus semua class styling sebelumnya
-            select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
-
-            // Tambahkan class sesuai status
-            if (value === 'Disetujui') {
-                select.classList.add('bg-success', 'text-white');
-            } else if (value === 'Ditolak') {
-                select.classList.add('bg-danger', 'text-white');
-            } else if (value === 'Menunggu') {
-                select.classList.add('bg-warning');
-            }
-
-            // Pastikan dropdown tetap dalam ukuran normal
-            select.style.height = 'auto';
-            select.style.minHeight = '32px';
-        }
-
-        function setupStatusDropdowns() {
-            document.querySelectorAll('.status-dropdown').forEach(select => {
-                // Update warna berdasarkan status awal
-                updateStatusColor(select);
-
-                // Clone element untuk menghapus event listener lama
-                const cloned = select.cloneNode(true);
-                select.parentNode.replaceChild(cloned, select);
-
-                // Update warna lagi setelah clone
-                updateStatusColor(cloned);
-
-                // Tambahkan event listener untuk perubahan
-                cloned.addEventListener('change', (event) => {
-                    event.preventDefault();
-                    selectedFormToSubmit = cloned.closest('form');
-                    document.getElementById('customAlert').style.display = 'flex';
-                });
-
-                // Event listener untuk mengupdate warna saat dropdown berubah
-                cloned.addEventListener('input', (event) => {
-                    updateStatusColor(event.target);
-                });
-            });
-        }
-
-        // Memberikan warna latar pada <select> sesuai status yang ditentukan
+        // Fungsi untuk memberikan warna pada dropdown sesuai status
         function updateStatusColor(select) {
             const value = select.value;
             select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
@@ -976,7 +935,28 @@ $result = mysqli_query($conn, $data_query);
             else if (value === 'Menunggu') select.classList.add('bg-warning');
         }
 
-        // Search seluruh data tanpa me reload halaman
+        // PERBAIKAN: Fungsi setupStatusDropdowns yang lebih sederhana
+        function setupStatusDropdowns() {
+            document.querySelectorAll('.status-dropdown').forEach(select => {
+                // Update warna sesuai status saat ini
+                updateStatusColor(select);
+
+                // Hapus event listener lama jika ada
+                select.removeEventListener('change', handleStatusChange);
+
+                // Tambahkan event listener baru
+                select.addEventListener('change', handleStatusChange);
+            });
+        }
+
+        // Fungsi terpisah untuk handle perubahan status
+        function handleStatusChange(event) {
+            event.preventDefault();
+            selectedFormToSubmit = event.target.closest('form');
+            document.getElementById('customAlert').style.display = 'flex';
+        }
+
+        // Search seluruh data tanpa reload halaman
         function loadData(search = '', page = 1) {
             const formData = new FormData();
             formData.append('search', search);
@@ -990,18 +970,19 @@ $result = mysqli_query($conn, $data_query);
                 .then(res => res.text())
                 .then(html => {
                     document.getElementById('admin-data-container').innerHTML = html;
-                    setupStatusDropdowns(); // <== penting!
+                    setupStatusDropdowns(); // Setup ulang dropdown setelah AJAX
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
         }
 
-        // Otomatis menampilkan data saat halaman dimuat termasuk saat search dan pagination
+        // Event listener utama
         document.addEventListener('DOMContentLoaded', function() {
+            // Setup dropdown pertama kali
             setupStatusDropdowns();
 
-            // PERBAIKAN: Menggunakan ID yang benar
+            // Search input
             const searchInput = document.getElementById('search-input');
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
@@ -1010,12 +991,11 @@ $result = mysqli_query($conn, $data_query);
                 });
             }
 
-            // Event delegation untuk pagination
+            // Pagination (menggunakan event delegation)
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('pagination-link')) {
                     e.preventDefault();
                     const page = e.target.getAttribute('data-page');
-                    // PERBAIKAN: Menggunakan ID yang benar
                     const searchInput = document.getElementById('search-input');
                     const keyword = searchInput ? searchInput.value : '';
                     loadData(keyword, page);
@@ -1023,13 +1003,13 @@ $result = mysqli_query($conn, $data_query);
             });
         });
 
-        // Tombol batal mengubah status
+        // Tombol konfirmasi dan batal
         document.getElementById('cancelBtn').onclick = () => {
             document.getElementById('customAlert').style.display = 'none';
-            location.reload();
+            // PERBAIKAN: Jangan reload halaman, cukup update dropdown
+            setupStatusDropdowns();
         };
 
-        // Tombol konfirmasi mengubah status
         document.getElementById('confirmBtn').onclick = () => {
             if (selectedFormToSubmit) {
                 selectedFormToSubmit.submit();

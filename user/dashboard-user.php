@@ -180,7 +180,6 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             transition: margin-left 0.3s ease;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             width: 200px;
             background: #1c1c1c;
@@ -188,15 +187,10 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             padding: 30px 20px;
             height: 100vh;
             position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            transform: translateX(0);
+            z-index: 1001;
             transition: transform 0.3s ease;
-        }
-
-        .sidebar.hidden {
-            transform: translateX(-100%);
+            left: 0;
+            top: 0;
         }
 
         .sidebar .card-logo {
@@ -248,25 +242,6 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             margin-left: 0;
             width: 100%;
         } */
-
-        /* Hamburger Menu */
-        .hamburger {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #1c1c1c;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .hamburger:hover {
-            background: #48cfcb;
-        }
 
         /* Topbar */
         .topbar {
@@ -455,83 +430,88 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             min-width: 110px;
         }
 
-        /* Mobile Responsive */
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #1c1c1c;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .hamburger {
-                display: block;
+            body {
+                flex-direction: column;
+            }
+
+            .header-section button {
+                padding: 4px 8px;
+                font-size: 12px;
+                line-height: 2;
             }
 
             .sidebar {
                 transform: translateX(-100%);
             }
 
-            .sidebar.show {
+            .sidebar.active {
                 transform: translateX(0);
             }
 
             .main {
                 margin-left: 0;
+                padding: 20px 15px;
                 width: 100%;
-                padding: 70px 15px 20px;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
             }
 
             .topbar {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 15px;
+            }
+
+            .topbar .d-flex {
+                justify-content: space-between;
+                align-items: center;
             }
 
             .input-with-icon {
                 max-width: 100%;
+                order: 2;
             }
 
             .profile {
-                justify-content: center;
-            }
-
-            .header-section {
-                flex-direction: column;
-                align-items: stretch;
+                justify-content: flex-end;
             }
 
             .header-section h2 {
-                text-align: center;
-            }
-
-            .onsite-details {
-                flex-direction: column;
-            }
-
-            .onsite-info {
-                min-width: auto;
-            }
-
-            .map-box {
-                max-width: 100%;
-                height: 200px;
-            }
-
-            .pagination {
-                justify-content: center;
-            }
-
-            .modal-footer {
-                flex-direction: column !important;
-                align-items: stretch !important;
-            }
-
-            .modal-footer .btn {
-                width: 100%;
-            }
-
-            .modal-footer .d-flex {
-                flex-direction: column !important;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .main {
-                padding: 70px 10px 15px;
+                font-size: 1.5rem;
             }
 
             .onsite-card {
@@ -543,34 +523,91 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 align-items: flex-start;
             }
 
-            .profile span {
-                font-size: 14px;
+            .onsite-header>div:first-child {
+                min-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .onsite-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .onsite-info {
+                min-width: 100%;
+            }
+
+            .map-box {
+                max-width: 100%;
+                height: 200px;
+            }
+
+            .onsite-files {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .pagination {
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .pagination a,
+            .pagination span {
+                padding: 8px 12px;
+                min-width: 35px;
+                font-size: 0.9rem;
             }
         }
 
-        /* Overlay for mobile sidebar */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
+        @media (max-width: 480px) {
+            .main {
+                padding: 15px 10px;
+            }
 
-        .sidebar-overlay.show {
-            display: block;
+            .header-section h2 {
+                font-size: 1.3rem;
+            }
+
+            .onsite-card {
+                padding: 12px;
+            }
+
+            .onsite-header strong {
+                font-size: 0.95rem;
+            }
+
+            .onsite-header small {
+                font-size: 0.8rem;
+            }
+
+            .badge-status {
+                padding: 4px 10px;
+                font-size: 0.8rem;
+            }
+
+            .onsite-badge {
+                padding: 3px 8px;
+                font-size: 0.8rem;
+            }
+
+            .map-box {
+                height: 160px;
+            }
+
+            .pagination a,
+            .pagination span {
+                padding: 6px 8px;
+                min-width: 30px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Hamburger Menu -->
-    <button class="hamburger" id="hamburger">
-        <i class="bi bi-list"></i>
-    </button>
+    <!-- Overlay untuk mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -588,25 +625,38 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 </a>
             </div>
             <div class="logout-link">
-                <a href="../logout.php"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="../logout.php">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="main" id="main-content">
-        <form class="search-bar" method="post">
-            <div class="topbar">
-                <div class="input-with-icon">
-                    <input type="text" placeholder="Cari onsite..." name="search" id="search-input" autocomplete="off">
-                    <i class="bi bi-search"></i>
-                </div>
+    <div class="main">
+        <div class="topbar">
+            <!-- Mobile menu toggle dan profile dalam satu baris -->
+            <div class="d-flex justify-content-between align-items-center w-100 d-md-none">
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
                 <div class="profile">
                     <span><?= htmlspecialchars($username) ?></span>
                     <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
                 </div>
             </div>
-        </form>
+
+            <!-- Desktop layout -->
+            <div class="input-with-icon">
+                <input type="text" placeholder="Cari onsite..." id="search-input" autocomplete="off">
+                <i class="bi bi-search"></i>
+            </div>
+            <div class="profile d-none d-md-flex">
+                <span><?= htmlspecialchars($username) ?></span>
+                <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
+            </div>
+        </div>
+
 
         <div class="header-section">
             <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span></h2>
@@ -713,21 +763,24 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         document.addEventListener("DOMContentLoaded", function() {
             const searchInput = document.getElementById("search-input");
             const dataContainer = document.getElementById("data-container");
-            const hamburger = document.getElementById("hamburger");
-            const sidebar = document.getElementById("sidebar");
-            const sidebarOverlay = document.getElementById("sidebar-overlay");
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
             const mainContent = document.getElementById("main-content");
             const modal = document.getElementById("modalTambahOnsite");
 
+            mobileMenuToggle?.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                sidebarOverlay.classList.add('active');
+            });
+
+            sidebarOverlay?.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            });
+
             // Initial load
             fetchData(1, "");
-
-            // Hamburger menu functionality
-            hamburger.addEventListener("click", function() {
-                sidebar.classList.toggle("show");
-                sidebarOverlay.classList.toggle("show");
-                document.body.style.overflow = sidebar.classList.contains("show") ? "hidden" : "auto";
-            });
 
             // Close sidebar when clicking overlay
             sidebarOverlay.addEventListener("click", function() {
@@ -1208,7 +1261,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         }
     </script>
 
-     <?php if (isset($_SESSION['login_success'])): ?>
+    <?php if (isset($_SESSION['login_success'])): ?>
         <script>
             Swal.fire({
                 title: 'Login Berhasil',
