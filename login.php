@@ -14,6 +14,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $username = trim($_POST['username'] ?? '');
   $password = $_POST['password'] ?? '';
 
+
+  $recaptcha_secret = '6LeZ73UrAAAAALrTyTDi6OUs2n8KRqlnqbRqiRyh';
+$recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
+
+$verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response");
+$captcha_success = json_decode($verify);
+
+if (!$captcha_success->success) {
+    $message = "Verifikasi CAPTCHA gagal. Coba lagi.";
+} else {
+    // lanjutkan proses login
   if (empty($username) || empty($password)) {
     $message = "Username dan Password wajib diisi!";
   } else {
@@ -44,6 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               break;
             }
           }
+      
 
           // Mengecek apakah user sudah ada di tabel user berdasarkan username
           require('include/koneksi.php');
@@ -68,8 +80,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           $_SESSION['login_success'] = true;
 
           // Redirect sesuai role user/admin
-          header("Location: " . ($is_admin ? "admin/dashboard-admin.php" : "user/dashboard-user.php"));
-          exit();
+          if ($is_admin) {
+            $_SESSION['role'] = 'admin'; // default role = admin
+            header("Location: admin/pilih-role.php"); // Arahkan ke halaman pemilihan role
+            exit();
+          } else {
+            $_SESSION['role'] = 'user';
+            $_SESSION['active_role'] = 'user';
+            header("Location: user/dashboard-user.php");
+            exit();
+          }
         } else {
           $message = "Tidak dapat menemukan informasi grup pengguna.";
         }
@@ -80,6 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       ldap_unbind($ldap_conn);
     }
   }
+}
 }
 ?>
 
@@ -94,6 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
     * {
@@ -419,6 +441,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   <i class="bi bi-eye-slash input-icon-right toggle-password" id="togglePassword"></i>
                 </div>
 
+                <div class="g-recaptcha mb-3" data-sitekey="6LeZ73UrAAAAAFNEx7OVwX0T_v1t10q2FRYy3dCZ"></div>
                 <button type="submit" class="btn-login">Login</button>
               </form>
             </div>
@@ -427,9 +450,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </div>
   </div>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     // Toggle password visibility
@@ -497,6 +517,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       });
     });
   </script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script> 
 </body>
 
 </html>

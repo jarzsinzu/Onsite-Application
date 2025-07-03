@@ -111,9 +111,9 @@ if (isset($_POST['simpan'])) {
         $id_onsite = simpanData($conn, $data, $user_id);
 
         if ($id_onsite) {
-            if (!empty($_POST['anggota_ids']) && is_array($_POST['anggota_ids'])) {
+            if (!empty($_POST['anggota']) && is_array($_POST['anggota'])) {
                 $stmt = $conn->prepare("INSERT INTO tim_onsite (id_onsite, id_anggota) VALUES (?, ?)");
-                foreach ($_POST['anggota_ids'] as $id_anggota) {
+                foreach ($_POST['anggota'] as $id_anggota) {
                     $id_anggota = (int)$id_anggota;
                     $stmt->bind_param("ii", $id_onsite, $id_anggota);
                     $stmt->execute();
