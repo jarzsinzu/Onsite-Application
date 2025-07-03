@@ -697,7 +697,7 @@ $result = mysqli_query($conn, $sql);
                 }
                 ?>
               </div>
-              <div class="mt-2"><strong>Biaya:</strong> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+              <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
               <div class="mt-2 onsite-files">
                 <?php if (!empty($row['dokumentasi'])): ?>
                   <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
