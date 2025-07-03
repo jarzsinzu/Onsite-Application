@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         LIMIT $offset, $records_per_page
     ";
     $result = mysqli_query($conn, $data_query);
-    ?>
+?>
 
     <!-- Card Content -->
     <div id="customAlert" class="modal-overlay" style="display: none;">
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
                 updateStatusColor(select);
-                
+
                 const cloned = select.cloneNode(true);
                 select.parentNode.replaceChild(cloned, select);
 
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         setupStatusDropdowns();
     </script>
 
-    <?php
+<?php
     exit();
 }
 
@@ -301,6 +301,8 @@ $result = mysqli_query($conn, $data_query);
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .input-with-icon {
@@ -326,6 +328,7 @@ $result = mysqli_query($conn, $data_query);
         .profile {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
 
         .profile span {
@@ -394,7 +397,7 @@ $result = mysqli_query($conn, $data_query);
         .onsite-card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             margin-bottom: 20px;
             padding: 20px;
             display: flex;
@@ -413,11 +416,60 @@ $result = mysqli_query($conn, $data_query);
             min-width: 150px;
         }
 
+        /* CSS untuk dropdown status - PERBAIKAN */
+        .status-section {
+            min-width: 120px;
+            /* Kurangi dari 150px */
+            max-width: 140px;
+            /* Batasi maksimal width */
+        }
+
         .status-dropdown {
-            border-radius: 20px;
-            padding: 6px 12px;
+            border-radius: 15px;
+            /* Kurangi dari 20px */
+            padding: 4px 8px;
+            /* Kurangi padding */
             font-weight: 500;
             border: 1px solid #ddd;
+            font-size: 0.85rem;
+            /* Kurangi ukuran font */
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            /* Pastikan height otomatis */
+            line-height: 1.2;
+            /* Kurangi line-height */
+
+            /* Pastikan dropdown tidak menampilkan multiple options */
+            appearance: auto;
+            -webkit-appearance: menulist;
+            -moz-appearance: menulist;
+        }
+
+        /* Styling untuk option dalam dropdown */
+        .status-dropdown option {
+            padding: 2px 4px;
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+
+        /* Warna background sesuai status */
+        .status-dropdown.bg-success {
+            background-color: #198754 !important;
+            color: white !important;
+            border-color: #198754;
+        }
+
+        .status-dropdown.bg-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #dc3545;
+        }
+
+        .status-dropdown.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            border-color: #ffc107;
         }
 
         .onsite-badge {
@@ -457,16 +509,236 @@ $result = mysqli_query($conn, $data_query);
             color: #0d6efd;
         }
 
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #1c1c1c;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .onsite-details { flex-direction: column; }
-            .main { margin-left: 0; padding: 20px; }
-            .sidebar { display: none; }
-            .topbar { flex-direction: column; gap: 15px; }
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 20px 15px;
+                width: 100%;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .topbar .d-flex {
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .input-with-icon {
+                max-width: 100%;
+                order: 2;
+            }
+
+            .profile {
+                justify-content: flex-end;
+            }
+
+            .header-section h2 {
+                font-size: 1.5rem;
+            }
+
+            .onsite-card {
+                padding: 15px;
+            }
+
+            .onsite-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .onsite-header>div:first-child {
+                min-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .onsite-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .onsite-info {
+                min-width: 100%;
+            }
+
+            .map-box {
+                max-width: 100%;
+                height: 200px;
+            }
+
+            .onsite-files {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .pagination {
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .pagination a,
+            .pagination span {
+                padding: 8px 12px;
+                min-width: 35px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .status-section {
+            min-width: 100px;
+            max-width: 110px;
+        }
+
+        .status-dropdown {
+            font-size: 0.8rem;
+            padding: 3px 6px;
+            max-width: 100px;
+            border-radius: 12px;
+        }
+
+        .onsite-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .onsite-header>div:first-child {
+            width: 100%;
+        }
+
+        .status-section {
+            width: 100%;
+            max-width: 120px;
+        }
+
+        /* Perbaikan CSS untuk mobile sidebar */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                /* Tambahkan transition untuk smooth animation */
+                z-index: 1001;
+                /* Pastikan sidebar di atas overlay */
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 20px 15px;
+                width: 100%;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .header-section h2 {
+                font-size: 1.3rem;
+            }
+
+            .onsite-card {
+                padding: 12px;
+            }
+
+            .onsite-header strong {
+                font-size: 0.95rem;
+            }
+
+            .onsite-header small {
+                font-size: 0.8rem;
+            }
+
+            .badge-status {
+                padding: 4px 10px;
+                font-size: 0.8rem;
+            }
+
+            .onsite-badge {
+                padding: 3px 8px;
+                font-size: 0.8rem;
+            }
+
+            .map-box {
+                height: 160px;
+            }
+
+            .pagination a,
+            .pagination span {
+                padding: 6px 8px;
+                min-width: 30px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-dropdown {
+                font-size: 0.75rem;
+                padding: 2px 4px;
+                max-width: 90px;
+            }
         }
     </style>
 </head>
 
 <body>
+    <!-- Overlay untuk mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Popup saat mengubah status -->
     <div id="customAlert" class="modal-overlay" style="display: none;">
@@ -494,13 +766,26 @@ $result = mysqli_query($conn, $data_query);
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main">
         <div class="topbar">
+            <!-- Mobile menu toggle dan profile dalam satu baris -->
+            <div class="d-flex justify-content-between align-items-center w-100 d-md-none">
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="profile">
+                    <span><?= htmlspecialchars($username) ?></span>
+                    <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
+                </div>
+            </div>
+
+            <!-- Desktop layout -->
             <div class="input-with-icon">
-                <input type="text" placeholder="Cari onsite..." id="search-input-admin" autocomplete="off">
+                <input type="text" placeholder="Cari onsite..." id="search-input" autocomplete="off">
                 <i class="bi bi-search"></i>
             </div>
-            <div class="profile">
+            <div class="profile d-none d-md-flex">
                 <span><?= htmlspecialchars($username) ?></span>
                 <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
             </div>
@@ -599,21 +884,85 @@ $result = mysqli_query($conn, $data_query);
     </div>
 
     <script>
+        // Mobile menu functionality - PERBAIKAN
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.querySelector('.sidebar'); // Menggunakan querySelector karena tidak ada ID
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        // Event listener untuk toggle mobile menu
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', function() {
+                if (sidebar) {
+                    sidebar.classList.toggle('active'); // Menggunakan toggle untuk membuka/tutup
+                }
+                if (sidebarOverlay) {
+                    sidebarOverlay.classList.toggle('active');
+                }
+            });
+        }
+
+        // Event listener untuk overlay - tutup sidebar ketika overlay diklik
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                if (sidebar) {
+                    sidebar.classList.remove('active');
+                }
+                sidebarOverlay.classList.remove('active');
+            });
+        }
+
+        // HAPUS BAGIAN INI - duplikasi dan menyebabkan error
+        // document.getElementById('mobile-menu-toggle')?.addEventListener('click', function() {
+        //     document.querySelector('.sidebar')?.classList.toggle('show'); // 'show' class tidak ada di CSS
+        // });
+
         // Dropdown perubahan status
         let selectedFormToSubmit = null;
 
         // Update status & mengubah warna dropdown sesuai status
+        // Perbaikan JavaScript untuk dropdown status
+        function updateStatusColor(select) {
+            const value = select.value;
+
+            // Hapus semua class styling sebelumnya
+            select.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+
+            // Tambahkan class sesuai status
+            if (value === 'Disetujui') {
+                select.classList.add('bg-success', 'text-white');
+            } else if (value === 'Ditolak') {
+                select.classList.add('bg-danger', 'text-white');
+            } else if (value === 'Menunggu') {
+                select.classList.add('bg-warning');
+            }
+
+            // Pastikan dropdown tetap dalam ukuran normal
+            select.style.height = 'auto';
+            select.style.minHeight = '32px';
+        }
+
         function setupStatusDropdowns() {
             document.querySelectorAll('.status-dropdown').forEach(select => {
+                // Update warna berdasarkan status awal
                 updateStatusColor(select);
-                
+
+                // Clone element untuk menghapus event listener lama
                 const cloned = select.cloneNode(true);
                 select.parentNode.replaceChild(cloned, select);
 
+                // Update warna lagi setelah clone
+                updateStatusColor(cloned);
+
+                // Tambahkan event listener untuk perubahan
                 cloned.addEventListener('change', (event) => {
                     event.preventDefault();
                     selectedFormToSubmit = cloned.closest('form');
                     document.getElementById('customAlert').style.display = 'flex';
+                });
+
+                // Event listener untuk mengupdate warna saat dropdown berubah
+                cloned.addEventListener('input', (event) => {
+                    updateStatusColor(event.target);
                 });
             });
         }
@@ -635,33 +984,40 @@ $result = mysqli_query($conn, $data_query);
             formData.append('ajax', '1');
 
             fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById('admin-data-container').innerHTML = html;
-                setupStatusDropdowns(); // <== penting!
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('admin-data-container').innerHTML = html;
+                    setupStatusDropdowns(); // <== penting!
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
 
         // Otomatis menampilkan data saat halaman dimuat termasuk saat search dan pagination
         document.addEventListener('DOMContentLoaded', function() {
             setupStatusDropdowns();
 
-            document.getElementById('search-input-admin').addEventListener('input', function() {
-                const keyword = this.value;
-                loadData(keyword);
-            });
+            // PERBAIKAN: Menggunakan ID yang benar
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const keyword = this.value;
+                    loadData(keyword);
+                });
+            }
 
+            // Event delegation untuk pagination
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('pagination-link')) {
                     e.preventDefault();
                     const page = e.target.getAttribute('data-page');
-                    const keyword = document.getElementById('search-input-admin').value;
+                    // PERBAIKAN: Menggunakan ID yang benar
+                    const searchInput = document.getElementById('search-input');
+                    const keyword = searchInput ? searchInput.value : '';
                     loadData(keyword, page);
                 }
             });
@@ -723,6 +1079,6 @@ $result = mysqli_query($conn, $data_query);
         unset($_SESSION['message_type']);
         ?>
     <?php endif; ?>
-
 </body>
+
 </html>
