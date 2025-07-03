@@ -1,7 +1,7 @@
 <?php
-
 session_start();
 require('../include/koneksi.php');
+require_once('../include/send_telegram.php'); // Kirim notifikasi ke Telegram
 
 if (!isset($_SESSION['user'])) {
     header("Location: ../login.php");
@@ -11,7 +11,6 @@ if (!isset($_SESSION['user'])) {
 // Fungsi untuk menyimpan data ke database
 function simpanData($conn, $data, $user_id)
 {
-    // Query insert
     $stmt = $conn->prepare("INSERT INTO tambah_onsite (
         user_id, tanggal, latitude, longitude, keterangan_kegiatan,
         jam_mulai, jam_selesai, estimasi_biaya, dokumentasi, file_csv, status_pembayaran
@@ -23,7 +22,6 @@ function simpanData($conn, $data, $user_id)
 
     $estimasi_biaya = (float)$data['estimasi_biaya'];
 
-    // Mengisi nilai ke ? dalam query
     $stmt->bind_param(
         "sssssssdsss",
         $user_id,
@@ -120,6 +118,16 @@ if (isset($_POST['simpan'])) {
                 }
                 $stmt->close();
             }
+
+            // Ambil nama user
+            $query_user = mysqli_query($conn, "SELECT nama FROM users WHERE id = '$user_id'");
+            $data_user = mysqli_fetch_assoc($query_user);
+            $nama_user = $data_user['nama'] ?? 'User Tidak Diketahui';
+
+            // Kirim notifikasi ke admin
+            $chat_id_admin = 7570636987; // GANTI dengan chat ID admin Telegram kamu
+            $pesan = "📢 Ada pengajuan onsite baru dari $nama_user.";
+            sendTelegram($chat_id_admin, $pesan);
 
             // Tandai berhasil dengan session
             $_SESSION['tambah_berhasil'] = true;
