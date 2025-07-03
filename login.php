@@ -16,91 +16,91 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
   $recaptcha_secret = '6LeZ73UrAAAAALrTyTDi6OUs2n8KRqlnqbRqiRyh';
-$recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
+  $recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
 
-$verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response");
-$captcha_success = json_decode($verify);
+  $verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response");
+  $captcha_success = json_decode($verify);
 
-if (!$captcha_success->success) {
+  if (!$captcha_success->success) {
     $message = "Verifikasi CAPTCHA gagal. Coba lagi.";
-} else {
-    // lanjutkan proses login
-  if (empty($username) || empty($password)) {
-    $message = "Username dan Password wajib diisi!";
   } else {
-    $ldap_conn = ldap_connect($ldap_server, $ldap_port); // Menghubungkan ke server LDAP
-    if (!$ldap_conn) {
-      $message = "Gagal terhubung ke server LDAP.";
+    // lanjutkan proses login
+    if (empty($username) || empty($password)) {
+      $message = "Username dan Password wajib diisi!";
     } else {
-      ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
-      ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
+      $ldap_conn = ldap_connect($ldap_server, $ldap_port); // Menghubungkan ke server LDAP
+      if (!$ldap_conn) {
+        $message = "Gagal terhubung ke server LDAP.";
+      } else {
+        ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+        ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
-      // Proses login & mencari data user di LDAP sesuai grup
-      $ldap_user = $username . '@' . $domain;
-      $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
+        // Proses login & mencari data user di LDAP sesuai grup
+        $ldap_user = $username . '@' . $domain;
+        $bind = @ldap_bind($ldap_conn, $ldap_user, $password);
 
-      if ($bind) {
-        $filter = "(sAMAccountName=$username)";
-        $attributes = ['memberOf'];
-        $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
+        if ($bind) {
+          $filter = "(sAMAccountName=$username)";
+          $attributes = ['memberOf'];
+          $result = ldap_search($ldap_conn, $base_dn, $filter, $attributes);
 
-        if ($result && ldap_count_entries($ldap_conn, $result) > 0) {
-          $entries = ldap_get_entries($ldap_conn, $result);
-          $groups = $entries[0]['memberof'] ?? [];
+          if ($result && ldap_count_entries($ldap_conn, $result) > 0) {
+            $entries = ldap_get_entries($ldap_conn, $result);
+            $groups = $entries[0]['memberof'] ?? [];
 
-          $is_admin = false;
-          foreach ($groups as $group_dn) {
-            if (stripos($group_dn, "CN=PAM_ADMIN") !== false) {
-              $is_admin = true;
-              break;
+            $is_admin = false;
+            foreach ($groups as $group_dn) {
+              if (stripos($group_dn, "CN=PAM_ADMIN") !== false) {
+                $is_admin = true;
+                break;
+              }
             }
-          }
-      
 
-          // Mengecek apakah user sudah ada di tabel user berdasarkan username
-          require('include/koneksi.php');
-          $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
-          mysqli_stmt_bind_param($stmt, "s", $username);
-          mysqli_stmt_execute($stmt);
-          $result = mysqli_stmt_get_result($stmt);
 
-          if ($row = mysqli_fetch_assoc($result)) {
-            $user_id = $row['id'];
-          } else {
-            $stmt = mysqli_prepare($conn, "INSERT INTO users (username) VALUES (?)");
+            // Mengecek apakah user sudah ada di tabel user berdasarkan username
+            require('include/koneksi.php');
+            $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
             mysqli_stmt_bind_param($stmt, "s", $username);
             mysqli_stmt_execute($stmt);
-            $user_id = mysqli_insert_id($conn);
-          }
+            $result = mysqli_stmt_get_result($stmt);
 
-          // Menyimpan data login ke session
-          $_SESSION['user'] = $username;
-          $_SESSION['user_id'] = $user_id;
-          $_SESSION['role'] = $is_admin ? 'admin' : 'user';
-          $_SESSION['login_success'] = true;
+            if ($row = mysqli_fetch_assoc($result)) {
+              $user_id = $row['id'];
+            } else {
+              $stmt = mysqli_prepare($conn, "INSERT INTO users (username) VALUES (?)");
+              mysqli_stmt_bind_param($stmt, "s", $username);
+              mysqli_stmt_execute($stmt);
+              $user_id = mysqli_insert_id($conn);
+            }
 
-          // Redirect sesuai role user/admin
-          if ($is_admin) {
-            $_SESSION['role'] = 'admin'; // default role = admin
-            header("Location: admin/pilih-role.php"); // Arahkan ke halaman pemilihan role
-            exit();
+            // Menyimpan data login ke session
+            $_SESSION['user'] = $username;
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['role'] = $is_admin ? 'admin' : 'user';
+            $_SESSION['login_success'] = true;
+
+            // Redirect sesuai role user/admin
+            if ($is_admin) {
+              $_SESSION['role'] = 'admin'; // default role = admin
+              header("Location: admin/pilih-role.php"); // Arahkan ke halaman pemilihan role
+              exit();
+            } else {
+              $_SESSION['role'] = 'user';
+              $_SESSION['active_role'] = 'user';
+              header("Location: user/dashboard-user.php");
+              exit();
+            }
           } else {
-            $_SESSION['role'] = 'user';
-            $_SESSION['active_role'] = 'user';
-            header("Location: user/dashboard-user.php");
-            exit();
+            $message = "Tidak dapat menemukan informasi grup pengguna.";
           }
         } else {
-          $message = "Tidak dapat menemukan informasi grup pengguna.";
+          $message = "Login error: Invalid credentials";
         }
-      } else {
-        $message = "Login error: Invalid credentials";
-      }
 
-      ldap_unbind($ldap_conn);
+        ldap_unbind($ldap_conn);
+      }
     }
   }
-}
 }
 ?>
 
@@ -142,7 +142,7 @@ if (!$captcha_success->success) {
       background-color: #1e1e1e;
       border-radius: 15px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
+      /* overflow: hidden; */
       max-width: 900px;
       width: 100%;
       position: relative;
@@ -295,6 +295,15 @@ if (!$captcha_success->success) {
       transform: translateY(-1px);
     }
 
+    .g-recaptcha {
+
+      transform: scale(0.9);
+      transform-origin: 0 0;
+      max-width: 100%;
+      z-index: 10;
+      position: relative;
+    }
+
     /* Responsive styles */
     @media (max-width: 768px) {
       .main-container {
@@ -373,6 +382,10 @@ if (!$captcha_success->success) {
         padding: 12px;
         font-size: 15px;
       }
+    }
+
+    .g-recaptcha {
+      /* transform: scale(0.85); */
     }
 
     /* Fix for autofill */
@@ -517,7 +530,7 @@ if (!$captcha_success->success) {
       });
     });
   </script>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script> 
+  <script src="https://www.google.com/recaptcha/api.js?hl=id" async defer></script>
 </body>
 
 </html>
