@@ -1,6 +1,6 @@
 <?php
 $filename = $_GET['file'] ?? '';
-$filepath = __DIR__ . '/csv/' . basename($filename);
+$filepath = __DIR__ . '/uploads/csv/' . basename($filename);
 
 if (!empty($filename) && file_exists($filepath)) {
     header('Content-Description: File Transfer');
