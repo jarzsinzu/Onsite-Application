@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                     <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;"> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
                     <div class="mt-2 onsite-files">
                         <?php if (!empty($row['dokumentasi'])): ?>
-                            <a href="../uploads/dokumentasi/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                            <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
                         <?php endif; ?>
                         <?php if (!empty($row['file_csv'])): ?>
                             <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>

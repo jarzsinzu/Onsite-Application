@@ -268,7 +268,7 @@ body {
 }
 
 .g-recaptcha {
-    /* transform: scale(0.85); */
+    position: relative;
 }
 
 /* Fix for autofill */
