@@ -224,6 +224,14 @@ body {
     }
 }
 
+    .g-recaptcha {
+        transform: scale(0.8);
+        transform-origin: 0 0;
+        max-width: 100%;
+        z-index: 10;
+        position: relative;
+    }
+
 @media (max-width: 576px) {
     .card-logo {
         width: 100px;

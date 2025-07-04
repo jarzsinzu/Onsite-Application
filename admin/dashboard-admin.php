@@ -212,6 +212,16 @@ $result = mysqli_query($conn, $data_query);
 </head>
 
 <body>
+    <!-- Idle Warning Popup -->
+    <div id="idle-warning" style="display:none;">
+        <div class="modal-box" style="text-align: center;">
+            <img src="../asset/idle-icon.gif" alt="Idle Icon" style="width: 60px; margin-bottom: 10px;" />
+            <h5>Tidak Ada Aktivitas</h5>
+            <p>Anda akan logout otomatis dalam <span id="countdown"></span> detik.</p>
+            <button class="btn btn-outline-primary" onclick="stayLoggedIn()">Saya masih di sini</button>
+        </div>
+    </div>
+
     <!-- Overlay untuk mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
@@ -359,6 +369,59 @@ $result = mysqli_query($conn, $data_query);
     </div>
 
     <script>
+        // Auto Logout
+        let idleTime = 0;
+        const idleLimit = 10; // 2 menit
+        const logoutDelay = 30; // 30 detik
+        let countdown = logoutDelay;
+        let countdownInterval;
+        let logoutTimeout;
+
+        function resetIdleTime() {
+            idleTime = 0;
+            // Tidak menutup popup meskipun user aktif
+        }
+
+        // Tangkap semua aktivitas
+        document.onmousemove = resetIdleTime;
+        document.onkeypress = resetIdleTime;
+        document.onscroll = resetIdleTime;
+        document.onclick = resetIdleTime;
+
+        // Hitung waktu idle setiap detik
+        setInterval(() => {
+            idleTime++;
+            if (idleTime === idleLimit) {
+                showIdleWarning();
+            }
+        }, 1000);
+
+        function showIdleWarning() {
+            const warning = document.getElementById('idle-warning');
+            warning.style.display = 'flex'; // gunakan flex jika pakai center align
+            countdown = logoutDelay;
+            document.getElementById('countdown').textContent = countdown;
+
+            // Jalankan hitung mundur
+            countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+            }, 1000);
+
+            // Logout otomatis
+            logoutTimeout = setTimeout(() => {
+                window.location.href = '../logout.php?reason=idle';
+            }, logoutDelay * 1000);
+        }
+
+        function stayLoggedIn() {
+            clearInterval(countdownInterval);
+            clearTimeout(logoutTimeout);
+            document.getElementById('idle-warning').style.display = 'none';
+            idleTime = 0;
+        }
+
+
         // Mobile menu functionality - PERBAIKAN
         const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
         const sidebar = document.querySelector('.sidebar'); // Menggunakan querySelector karena tidak ada ID
