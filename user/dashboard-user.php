@@ -328,7 +328,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                             </button>
                         </div>
                         <div class="ms-auto">
-                            <a href="../template/template_onsite.csv" class="btn btn-success px-4">
+                            <a href="../template/template.csv" class="btn btn-success px-4">
                                 <i class="bi bi-download me-1"></i> Download Template CSV
                             </a>
                         </div>
