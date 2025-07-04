@@ -136,11 +136,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       align-items: center;
       justify-content: center;
       padding: 20px;
+      border-radius: 20px;
     }
 
     .login-card {
       background-color: #1e1e1e;
-      border-radius: 15px;
+      border-radius: 21px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
       /* overflow: hidden; */
       max-width: 900px;
@@ -164,6 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       justify-content: center;
       align-items: center;
       position: relative;
+      border-radius: 20px;
     }
 
     .welcome-text {
@@ -194,6 +196,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       flex-direction: column;
       justify-content: center;
       min-height: 500px;
+      border-radius: 20px;
     }
 
     .login-section h2 {
@@ -312,6 +315,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       .login-card {
         margin: 10px 0;
+        border-radius: 20px;
       }
 
       .card-logo {
