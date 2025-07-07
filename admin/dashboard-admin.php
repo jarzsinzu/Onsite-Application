@@ -277,7 +277,7 @@ $result = mysqli_query($conn, $data_query);
         </div>
 
         <div class="header-section">
-            <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> Karyawan</h2>
+            <h2 style="font-weight: bold;">Data <span style="color: #48cfcb;">Onsite</span> </h2>
         </div>
 
         <div id="admin-data-container">
@@ -371,7 +371,7 @@ $result = mysqli_query($conn, $data_query);
     <script>
         // Auto Logout
         let idleTime = 0;
-        const idleLimit = 2 * 60; // 2 menit
+        const idleLimit = 10; //  10 detik
         const logoutDelay = 30; // 30 detik
         let countdown = logoutDelay;
         let countdownInterval;
