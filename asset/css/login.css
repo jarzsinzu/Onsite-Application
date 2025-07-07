@@ -187,116 +187,62 @@ body {
     position: relative;
 }
 
-/* Responsive styles */
+/* Add these CSS rules to your login.css file */
+
+/* Mobile responsive improvements for logo positioning */
 @media (max-width: 768px) {
-    .main-container {
-        padding: 10px;
-    }
-
-    .login-card {
-        margin: 10px 0;
-    }
-
     .card-logo {
         width: 120px;
         top: 15px;
         left: 15px;
-    }
-
-    .welcome-section {
-        min-height: 250px;
-        order: 2;
-    }
-
-    .welcome-text p,
-    .welcome-text h2 {
-        font-size: 2rem;
+        /* Add z-index to ensure logo stays on top */
+        z-index: 20;
     }
 
     .login-section {
-        padding: 30px 25px;
+        padding: 60px 25px 30px 25px; /* Increased top padding to make room for logo */
         min-height: auto;
         order: 1;
     }
 
     .login-section h2 {
         font-size: 24px;
+        margin-top: 20px; /* Add margin-top to push login text down */
     }
 }
-
-    .g-recaptcha {
-        transform: scale(0.8);
-        transform-origin: 0 0;
-        max-width: 100%;
-        z-index: 10;
-        position: relative;
-    }
 
 @media (max-width: 576px) {
     .card-logo {
         width: 100px;
         top: 10px;
         left: 10px;
-    }
-
-    .welcome-section {
-        min-height: 200px;
-        display: none;
-        /* Hide welcome section on very small screens */
-    }
-
-    .welcome-text p,
-    .welcome-text h2 {
-        font-size: 1.5rem;
+        z-index: 20;
     }
 
     .login-section {
-        padding: 25px 20px;
+        padding: 80px 20px 25px 20px; /* Even more top padding for smaller screens */
         border-radius: 15px;
     }
 
     .login-section h2 {
         font-size: 22px;
         text-align: center;
+        margin-top: 10px; /* Additional margin to separate from logo */
     }
 
     .subtitle {
         text-align: center;
-    }
-
-    .form-control-custom {
-        height: 45px;
-        padding: 10px 40px;
-    }
-
-    .btn-login {
-        padding: 12px;
-        font-size: 15px;
+        margin-top: 5px;
     }
 }
 
-.g-recaptcha {
-    position: relative;
-}
-
-/* Fix for autofill */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px #2a2a2a inset !important;
-    -webkit-text-fill-color: #fff !important;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
+/* Alternative approach - you can also hide the logo on very small screens */
+@media (max-width: 480px) {
+    .card-logo {
+        display: none; /* Uncomment this line if you want to hide logo on very small screens */
     }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
+    
+    .login-section {
+        padding: 30px 20px 25px 20px; /* Reduce padding if logo is hidden */
     }
 }
