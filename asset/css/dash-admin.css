@@ -11,10 +11,12 @@ body {
     background: linear-gradient(180deg, #1c1c1c 0%, #2d2d2d 100%);
     color: #fff;
     padding: 25px 20px;
-    height: 100vh;
+    max-height: 100vh;
     position: fixed;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
     border-right: 3px solid #48cfcb;
+    justify-content: space-between;
+    overflow-y: auto;
 }
 
 .sidebar .card-logo {
@@ -43,9 +45,11 @@ body {
     color: white;
     text-decoration: none;
     margin: 15px 0;
-    padding: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     border-radius: 8px;
     transition: background 0.3s;
+    font-size: 14px;
 }
 
 .nav-links a.active,
