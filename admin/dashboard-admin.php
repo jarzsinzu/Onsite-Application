@@ -371,7 +371,7 @@ $result = mysqli_query($conn, $data_query);
     <script>
         // Auto Logout
         let idleTime = 0;
-        const idleLimit = 10; //  10 detik
+        const idleLimit = 10; // 5 detik
         const logoutDelay = 30; // 30 detik
         let countdown = logoutDelay;
         let countdownInterval;
