@@ -1,86 +1,86 @@
 <?php
-session_start();
-require('../include/koneksi.php');
+    session_start();
+    require '../include/koneksi.php';
 
-if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
+    if (! isset($_SESSION['user']) || ! isset($_SESSION['user_id'])) {
+        header("Location: ../login.php");
+        exit();
+    }
 
-$current_page = basename($_SERVER['PHP_SELF']);
-$user_id = $_SESSION['user_id'];
-$username = $_SESSION['user'];
+    $current_page = basename($_SERVER['PHP_SELF']);
+    $user_id      = $_SESSION['user_id'];
+    $username     = $_SESSION['user'];
 
-// Handle AJAX request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
-    $search = $_POST['search'] ?? '';
-    $page = $_POST['page'] ?? 1;
-    $records_per_page = 5;
-    $offset = ($page - 1) * $records_per_page;
+    // Handle AJAX request
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+        $search           = $_POST['search'] ?? '';
+        $page             = $_POST['page'] ?? 1;
+        $records_per_page = 5;
+        $offset           = ($page - 1) * $records_per_page;
 
-    $search = mysqli_real_escape_string($conn, $search);
+        $search = mysqli_real_escape_string($conn, $search);
 
-    // Hitung total data untuk pagination
-    $count_query = "SELECT COUNT(DISTINCT to1.id) as total 
+        // Hitung total data untuk pagination
+        $count_query = "SELECT COUNT(DISTINCT to1.id) as total
         FROM tambah_onsite to1
         LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
         LEFT JOIN anggota a ON t.id_anggota = a.id
         WHERE to1.user_id = $user_id
         AND to1.status_pembayaran = 'Menunggu'";
-    if (!empty($search)) {
-        $count_query .= " AND (
-            to1.tanggal LIKE '%$search%' 
-            OR to1.keterangan_kegiatan LIKE '%$search%' 
-            OR to1.status_pembayaran LIKE '%$search%' 
+        if (! empty($search)) {
+            $count_query .= " AND (
+            to1.tanggal LIKE '%$search%'
+            OR to1.keterangan_kegiatan LIKE '%$search%'
+            OR to1.status_pembayaran LIKE '%$search%'
             OR a.nama LIKE '%$search%'
         )";
-    }
+        }
 
-    $count_result = mysqli_query($conn, $count_query);
-    $total_rows = mysqli_fetch_assoc($count_result)['total'];
-    $total_pages = ceil($total_rows / $records_per_page);
+        $count_result = mysqli_query($conn, $count_query);
+        $total_rows   = mysqli_fetch_assoc($count_result)['total'];
+        $total_pages  = ceil($total_rows / $records_per_page);
 
-    // Query ambil data
-    $data_query = "SELECT DISTINCT to1.* 
+        // Query ambil data
+        $data_query = "SELECT DISTINCT to1.*
         FROM tambah_onsite to1
         LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
         LEFT JOIN anggota a ON t.id_anggota = a.id
         WHERE to1.user_id = $user_id
         AND to1.status_pembayaran = 'Menunggu'";
-    if (!empty($search)) {
-        $data_query .= " AND (
-            to1.tanggal LIKE '%$search%' 
-            OR to1.keterangan_kegiatan LIKE '%$search%' 
-            OR to1.status_pembayaran LIKE '%$search%' 
+        if (! empty($search)) {
+            $data_query .= " AND (
+            to1.tanggal LIKE '%$search%'
+            OR to1.keterangan_kegiatan LIKE '%$search%'
+            OR to1.status_pembayaran LIKE '%$search%'
             OR a.nama LIKE '%$search%'
         )";
-    }
-    $data_query .= " ORDER BY to1.id DESC LIMIT $offset, $records_per_page";
+        }
+        $data_query .= " ORDER BY to1.id DESC LIMIT $offset, $records_per_page";
 
-    $result = mysqli_query($conn, $data_query);
+        $result = mysqli_query($conn, $data_query);
 
-    // Output AJAX content
-    ob_start();
-?>
+        // Output AJAX content
+        ob_start();
+    ?>
 
-    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+    <?php while ($row = mysqli_fetch_assoc($result)): ?>
         <div class="onsite-card">
             <div class="onsite-header">
                 <div>
-                    <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
-                    <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                    <strong><?php echo htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+                    <small><?php echo date('d M Y', strtotime($row['tanggal'])) ?> |<?php echo date('H:i', strtotime($row['jam_mulai'])) ?> -<?php echo date('H:i', strtotime($row['jam_selesai'])) ?></small>
                 </div>
                 <div>
                     <?php
-                    $status = $row['status_pembayaran'];
-                    $statusClass = match ($status) {
-                        'Menunggu' => 'warning',
-                        'Disetujui' => 'success',
-                        'Ditolak' => 'danger',
-                        default => 'secondary'
-                    };
-                    ?>
-                    <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+                        $status      = $row['status_pembayaran'];
+                            $statusClass = match ($status) {
+                                'Menunggu' => 'warning',
+                                'Disetujui' => 'success',
+                                'Ditolak' => 'danger',
+                                default => 'secondary'
+                            };
+                        ?>
+                    <span class="badge-status bg-<?php echo $statusClass ?>"><?php echo htmlspecialchars($status) ?></span>
                 </div>
             </div>
 
@@ -88,34 +88,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 <div class="onsite-info">
                     <div><strong>Anggota:</strong><br>
                         <?php
-                        $id_onsite = $row['id'];
-                        $anggota_result = mysqli_query($conn, "
-                            SELECT a.nama 
+                            $id_onsite      = $row['id'];
+                                $anggota_result = mysqli_query($conn, "
+                            SELECT a.nama
                             FROM tim_onsite t
                             JOIN anggota a ON t.id_anggota = a.id
                             WHERE t.id_onsite = $id_onsite
+                            ORDER BY a.nama ASC
                         ");
-                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
-                            echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
-                        }
-                        ?>
+                                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                                    echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                                }
+                            ?>
                     </div>
-                    <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;"> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+                    <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;"> Rp.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
                     <div class="mt-2 onsite-files">
-                        <?php if (!empty($row['dokumentasi'])): ?>
-                            <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                        <?php if (! empty($row['dokumentasi'])): ?>
+                            <a href="../uploads/dokumentasi/<?php echo urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
                         <?php endif; ?>
-                        <?php if (!empty($row['file_csv'])): ?>
-                            <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+<?php if (! empty($row['file_csv'])): ?>
+                            <a href="../download.php?file=<?php echo urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
                         <?php endif; ?>
                     </div>
                 </div>
 
                 <div class="map-box">
-                    <?php if ($row['latitude'] && $row['longitude']) : ?>
-                        <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                    <?php if ($row['latitude'] && $row['longitude']): ?>
+                        <iframe src="https://www.google.com/maps?q=<?php echo $row['latitude'] ?>,<?php echo $row['longitude'] ?>&hl=id&z=15&output=embed"
                             width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                    <?php else : ?>
+                    <?php else: ?>
                         <em>Lokasi tidak tersedia</em>
                     <?php endif; ?>
                 </div>
@@ -126,37 +127,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <!-- Pagination -->
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+            <a href="#" class="pagination-link" data-page="<?php echo $page - 1 ?>">&laquo;</a>
         <?php endif; ?>
-        <?php
-        $start = max(1, $page - 2);
-        $end = min($total_pages, $page + 2);
+<?php
+    $start = max(1, $page - 2);
+        $end   = min($total_pages, $page + 2);
         if ($start > 1) {
             echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-            if ($start > 2) echo '<span>...</span>';
+            if ($start > 2) {
+                echo '<span>...</span>';
+            }
+
         }
         for ($i = $start; $i <= $end; $i++) {
             $active = ($i == $page) ? 'active' : '';
             echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
         }
         if ($end < $total_pages) {
-            if ($end < $total_pages - 1) echo '<span>...</span>';
+            if ($end < $total_pages - 1) {
+                echo '<span>...</span>';
+            }
+
             echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
         }
-        ?>
-        <?php if ($page < $total_pages): ?>
-            <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+    ?>
+<?php if ($page < $total_pages): ?>
+            <a href="#" class="pagination-link" data-page="<?php echo $page + 1 ?>">&raquo;</a>
         <?php endif; ?>
     </div>
 
 <?php
     echo ob_get_clean();
-    exit();
-}
+        exit();
+    }
 
-// Untuk data anggota
-$anggota_result = mysqli_query($conn, "SELECT id, nama FROM anggota");
-$anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
+    // Untuk data anggota
+    $anggota_result = mysqli_query($conn, "SELECT id, nama FROM anggota ORDER BY nama ASC");
+    $anggota_array  = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -167,6 +174,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard User - ACTIVin</title>
 
+    <link rel="icon" href="../asset/ACTIVin.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../asset/css/dash-user.css">
@@ -190,18 +198,15 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
     <!-- Overlay untuk mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
         <div class="nav-container">
             <div class="nav-links">
-                <a href="dashboard-user.php" class="<?= $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
+                <a href="dashboard-user.php" class="<?php echo $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
                     <i class="bi bi-columns-gap"></i> Dashboard
                 </a>
-                <a href="history.php" class="<?= $current_page == 'history.php' ? 'active' : '' ?>">
+                <a href="history.php" class="<?php echo $current_page == 'history.php' ? 'active' : '' ?>">
                     <i class="bi bi-clock-history"></i> History
                 </a>
             </div>
@@ -218,11 +223,12 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         <div class="topbar">
             <!-- Mobile menu toggle dan profile dalam satu baris -->
             <div class="d-flex justify-content-between align-items-center w-100 d-md-none">
-                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                    <i class="bi bi-list"></i>
-                </button>
+                  <button id="mobile-menu-toggle"class="mobile-menu-toggle" onclick="toggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
                 <div class="profile">
-                    <span><?= htmlspecialchars($username) ?></span>
+                    <span><?php echo htmlspecialchars($username) ?></span>
                     <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
                 </div>
             </div>
@@ -233,7 +239,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 <i class="bi bi-search"></i>
             </div>
             <div class="profile d-none d-md-flex">
-                <span><?= htmlspecialchars($username) ?></span>
+                <span><?php echo htmlspecialchars($username) ?></span>
                 <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
             </div>
         </div>
@@ -254,7 +260,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div class="modal-content">
                 <form action="proses-tambah.php" method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?>">
+                    <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id'] ?>">
                     <div class="modal-header bg-dark text-white">
                         <h5 class="modal-title" id="modalTambahOnsiteLabel">Form Tambah Data Onsite</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -327,7 +333,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                                 <i class="bi bi-x-circle me-1"></i> Batal
                             </button>
                         </div>
-                        <div class="ms-auto">
+                        <div class="download-wrapper">
                             <a href="../template/template.csv" class="btn btn-success px-4">
                                 <i class="bi bi-download me-1"></i> Download Template CSV
                             </a>
@@ -350,45 +356,37 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             const mainContent = document.getElementById("main-content");
             const modal = document.getElementById("modalTambahOnsite");
 
-            mobileMenuToggle?.addEventListener('click', function() {
-                sidebar.classList.add('active');
-                sidebarOverlay.classList.add('active');
-            });
+            mobileMenuToggle?.addEventListener('click', function () {
+    sidebar.classList.add('active');
+    sidebarOverlay.classList.add('active');
+    document.body.style.overflow = "hidden"; // optional: prevent scroll
+});
 
-            sidebarOverlay?.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-            });
+sidebarOverlay?.addEventListener('click', function () {
+    closeSidebar();
+});
 
-            // Initial load
-            fetchData(1, "");
+// Close sidebar when clicking nav links (on mobile)
+sidebar?.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A' && window.innerWidth <= 768) {
+        closeSidebar();
+    }
+});
 
-            // Close sidebar when clicking overlay
-            sidebarOverlay.addEventListener("click", function() {
-                closeSidebar();
-            });
+// Close on resize to desktop
+window.addEventListener("resize", function () {
+    if (window.innerWidth > 768) {
+        closeSidebar();
+        document.body.style.overflow = "auto";
+    }
+});
 
-            // Close sidebar when clicking on nav links (mobile)
-            sidebar.addEventListener("click", function(e) {
-                if (e.target.tagName === 'A' && window.innerWidth <= 768) {
-                    closeSidebar();
-                }
-            });
-
-            // Handle window resize
-            window.addEventListener("resize", function() {
-                if (window.innerWidth > 768) {
-                    closeSidebar();
-                    document.body.style.overflow = "auto";
-                }
-            });
-
-            // Function to close sidebar
-            function closeSidebar() {
-                sidebar.classList.remove("show");
-                sidebarOverlay.classList.remove("show");
-                document.body.style.overflow = "auto";
-            }
+// Function to close sidebar
+function closeSidebar() {
+    sidebar.classList.remove("active");
+    sidebarOverlay.classList.remove("active");
+    document.body.style.overflow = "auto";
+}
 
             // AJAX fetch data function
             function fetchData(page = 1, keyword = "") {
@@ -436,6 +434,8 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
 
                 xhr.send("ajax=1&page=" + page + "&search=" + encodeURIComponent(keyword));
             }
+
+            fetchData(1, "");
 
             // Handle pagination click
             dataContainer.addEventListener("click", function(e) {
@@ -552,31 +552,66 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 }
             }
 
-            // Anggota selection functionality
+            // Anggota selection functionality - FIXED VERSION
             function initializeAnggotaSelection() {
                 const anggotaInput = document.getElementById("anggota-input");
                 const anggotaList = document.getElementById("anggota-list");
                 const anggotaTerpilih = document.getElementById("anggota-terpilih");
 
                 // Get anggota data from PHP (assuming it's available globally)
-                const anggotaData = <?php echo json_encode($anggota_array); ?>;
+                const anggotaData =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo json_encode($anggota_array); ?>;
                 let selectedAnggota = [];
 
+                // TAMBAHAN: Tampilkan semua anggota saat pertama kali modal dibuka
+                displayAnggotaList(anggotaData);
+
+                // TAMBAHAN: Tampilkan semua anggota saat input di-focus
+                anggotaInput.addEventListener("focus", function() {
+                    if (this.value === "") {
+                        const availableAnggota = anggotaData.filter(anggota =>
+                            !selectedAnggota.some(selected => selected.id === anggota.id)
+                        );
+                        displayAnggotaList(availableAnggota);
+                    }
+                });
+
+                // TAMBAHAN: Sembunyikan list saat input kehilangan focus (dengan delay)
+                anggotaInput.addEventListener("blur", function() {
+                    setTimeout(() => {
+                        // Cek apakah yang diklik adalah item di dalam list
+                        if (!anggotaList.contains(document.activeElement)) {
+                            anggotaList.style.display = "none";
+                        }
+                    }, 200);
+                });
+
+                // MODIFIKASI: Event listener untuk input dengan penambahan logic
                 anggotaInput.addEventListener("input", function() {
                     const keyword = this.value.toLowerCase();
-                    const filtered = anggotaData.filter(anggota =>
-                        anggota.nama.toLowerCase().includes(keyword) &&
-                        !selectedAnggota.some(selected => selected.id === anggota.id)
-                    );
+                    anggotaList.style.display = "block"; // Pastikan list terlihat
 
-                    displayAnggotaList(filtered);
+                    if (keyword === "") {
+                        // Jika input kosong, tampilkan semua anggota yang belum dipilih
+                        const availableAnggota = anggotaData.filter(anggota =>
+                            !selectedAnggota.some(selected => selected.id === anggota.id)
+                        );
+                        displayAnggotaList(availableAnggota);
+                    } else {
+                        // Jika ada keyword, filter berdasarkan nama
+                        const filtered = anggotaData.filter(anggota =>
+                            anggota.nama.toLowerCase().includes(keyword) &&
+                            !selectedAnggota.some(selected => selected.id === anggota.id)
+                        );
+                        displayAnggotaList(filtered);
+                    }
                 });
 
                 function displayAnggotaList(anggotaArray) {
                     anggotaList.innerHTML = "";
+                    anggotaList.style.display = "block"; // Pastikan list terlihat
 
                     if (anggotaArray.length === 0) {
-                        anggotaList.innerHTML = '<small class="text-muted">Tidak ada anggota ditemukan</small>';
+                        anggotaList.innerHTML = '<small class="text-muted p-2 d-block">Tidak ada anggota ditemukan</small>';
                         return;
                     }
 
@@ -589,7 +624,11 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                         div.addEventListener("click", function() {
                             addAnggota(anggota);
                             anggotaInput.value = "";
-                            anggotaList.innerHTML = "";
+                            // Tampilkan kembali list anggota yang tersisa setelah memilih
+                            const remainingAnggota = anggotaData.filter(item =>
+                                !selectedAnggota.some(selected => selected.id === item.id)
+                            );
+                            displayAnggotaList(remainingAnggota);
                         });
 
                         div.addEventListener("mouseenter", function() {
@@ -614,6 +653,12 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 function removeAnggota(anggotaId) {
                     selectedAnggota = selectedAnggota.filter(anggota => anggota.id !== anggotaId);
                     updateAnggotaTerpilih();
+
+                    // TAMBAHAN: Refresh list setelah menghapus anggota
+                    const availableAnggota = anggotaData.filter(anggota =>
+                        !selectedAnggota.some(selected => selected.id === anggota.id)
+                    );
+                    displayAnggotaList(availableAnggota);
                 }
 
                 function updateAnggotaTerpilih() {
@@ -628,10 +673,10 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                         const badge = document.createElement("span");
                         badge.className = "badge bg-info text-white me-2 mb-2 d-inline-flex align-items-center";
                         badge.innerHTML = `
-                    ${anggota.nama}
-                    <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.7em;" onclick="removeAnggota(${anggota.id})"></button>
-                    <input type="hidden" name="anggota[]" value="${anggota.id}">
-                `;
+                            ${anggota.nama}
+                            <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.7em;"></button>
+                            <input type="hidden" name="anggota[]" value="${anggota.id}">
+                        `;
 
                         const closeBtn = badge.querySelector('.btn-close');
                         closeBtn.addEventListener('click', function(e) {
@@ -734,7 +779,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
                 csvInput.addEventListener('change', function() {
                     const file = this.files[0];
                     if (file) {
-                        const maxSize = 2 * 1024 * 1024; // 2MB
+                        const maxSize = 5 * 1024 * 1024; // 5MB
 
                         if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
                             Swal.fire({
@@ -843,7 +888,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
 
         // Auto Logout
         let idleTime = 0;
-        const idleLimit = 2 * 60; // 2 menit
+        const idleLimit = 5 * 60; // 100 menit
         const logoutDelay = 30; // 30 detik
         let countdown = logoutDelay;
         let countdownInterval;
@@ -898,7 +943,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
         <script>
             Swal.fire({
                 title: 'Login Berhasil',
-                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;">' + <?= json_encode($username) ?> + '</span>',
+                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;">' +                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo json_encode($username) ?> + '</span>',
                 icon: 'success',
                 background: '#1c1c1c',
                 color: '#ffffff',
@@ -910,7 +955,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             });
         </script>
         <?php unset($_SESSION['login_success']); ?>
-    <?php endif; ?>
+<?php endif; ?>
 
     <?php if (isset($_SESSION['tambah_berhasil'])): ?>
         <script>
@@ -927,7 +972,7 @@ $anggota_array = mysqli_fetch_all($anggota_result, MYSQLI_ASSOC);
             });
         </script>
         <?php unset($_SESSION['tambah_berhasil']); ?>
-    <?php endif; ?>
+<?php endif; ?>
 
 </body>
 

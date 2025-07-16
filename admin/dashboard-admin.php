@@ -1,68 +1,68 @@
 <?php
-session_start();
-require('../include/koneksi.php');
+    session_start();
+    require '../include/koneksi.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
-}
+    if (! isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
+        header("Location: ../login.php");
+        exit();
+    }
 
-$current_page = basename($_SERVER['PHP_SELF']);
-$username = $_SESSION['user'];
+    $current_page = basename($_SERVER['PHP_SELF']);
+    $username     = $_SESSION['user'];
 
-// Handle AJAX request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
-    $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
-    $page = max((int)($_POST['page'] ?? 1), 1);
-    $records_per_page = 5;
-    $offset = ($page - 1) * $records_per_page;
+    // Handle AJAX request
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+        $search           = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
+        $page             = max((int) ($_POST['page'] ?? 1), 1);
+        $records_per_page = 5;
+        $offset           = ($page - 1) * $records_per_page;
 
-    // Base query untuk menghitung total data
-    $base_query = "
+        // Base query untuk menghitung total data
+        $base_query = "
         FROM tambah_onsite o
         LEFT JOIN tim_onsite t ON o.id = t.id_onsite
         LEFT JOIN anggota a ON t.id_anggota = a.id
     ";
 
-    $where = "";
-    if (!empty($search)) {
-        $where = "WHERE o.tanggal LIKE '%$search%' 
-               OR o.keterangan_kegiatan LIKE '%$search%' 
-               OR o.status_pembayaran LIKE '%$search%' 
+        $where = "";
+        if (! empty($search)) {
+            $where = "WHERE o.tanggal LIKE '%$search%'
+               OR o.keterangan_kegiatan LIKE '%$search%'
+               OR o.status_pembayaran LIKE '%$search%'
                OR a.nama LIKE '%$search%'";
-    }
+        }
 
-    // Menghitung total data untuk pagination
-    $count_query = "SELECT COUNT(DISTINCT o.id) as total $base_query $where";
-    $count_result = mysqli_query($conn, $count_query);
-    $total_rows = mysqli_fetch_assoc($count_result)['total'];
-    $total_pages = ceil($total_rows / $records_per_page);
+        // Menghitung total data untuk pagination
+        $count_query  = "SELECT COUNT(DISTINCT o.id) as total $base_query $where";
+        $count_result = mysqli_query($conn, $count_query);
+        $total_rows   = mysqli_fetch_assoc($count_result)['total'];
+        $total_pages  = ceil($total_rows / $records_per_page);
 
-    // Query ambil data sesuai halaman
-    $data_query = "
-        SELECT DISTINCT o.* 
-        $base_query 
-        $where 
-        ORDER BY o.id DESC 
+        // Query ambil data sesuai halaman
+        $data_query = "
+        SELECT DISTINCT o.*
+        $base_query
+        $where
+        ORDER BY o.id DESC
         LIMIT $offset, $records_per_page
     ";
-    $result = mysqli_query($conn, $data_query);
-?>
+        $result = mysqli_query($conn, $data_query);
+    ?>
 
-    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+    <?php while ($row = mysqli_fetch_assoc($result)): ?>
         <div class="onsite-card">
             <div class="onsite-header">
                 <div>
-                    <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
-                    <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                    <strong><?php echo htmlspecialchars($row['keterangan_kegiatan'])?></strong><br>
+                    <small><?php echo date('d M Y', strtotime($row['tanggal']))?> | <?php echo date('H:i', strtotime($row['jam_mulai']))?> - <?php echo date('H:i', strtotime($row['jam_selesai']))?></small>
                 </div>
                 <div class="status-section">
                     <form method="POST" action="ubah-status.php" style="display:inline-block;">
-                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-                            <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
-                            <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
-                            <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                        <input type="hidden" name="id" value="<?php echo $row['id']?>">
+                        <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?php echo $row['id']?>">
+                            <option value="Menunggu" <?php echo $row['status_pembayaran'] == 'Menunggu' ? 'selected' : ''?>>Menunggu</option>
+                            <option value="Disetujui" <?php echo $row['status_pembayaran'] == 'Disetujui' ? 'selected' : ''?>>Disetujui</option>
+                            <option value="Ditolak" <?php echo $row['status_pembayaran'] == 'Ditolak' ? 'selected' : ''?>>Ditolak</option>
                         </select>
                     </form>
                 </div>
@@ -72,34 +72,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 <div class="onsite-info">
                     <div><strong>Anggota:</strong><br>
                         <?php
-                        $id_onsite = $row['id'];
-                        $anggota_result = mysqli_query($conn, "
-                            SELECT a.nama 
+                            $id_onsite      = $row['id'];
+                                $anggota_result = mysqli_query($conn, "
+                            SELECT a.nama
                             FROM tim_onsite t
                             JOIN anggota a ON t.id_anggota = a.id
                             WHERE t.id_onsite = $id_onsite
                         ");
-                        while ($anggota = mysqli_fetch_assoc($anggota_result)) {
-                            echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
-                        }
-                        ?>
+                                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                                    echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                                }
+                            ?>
                     </div>
-                    <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></span></div>
+                    <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?php echo number_format($row['estimasi_biaya'], 0, ',', '.')?></span></div>
                     <div class="mt-2 onsite-files">
-                        <?php if (!empty($row['dokumentasi'])): ?>
-                            <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                        <?php if (! empty($row['dokumentasi'])): ?>
+                            <a href="../uploads/dokumentasi/<?php echo urlencode($row['dokumentasi'])?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
                         <?php endif; ?>
-                        <?php if (!empty($row['file_csv'])): ?>
-                            <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+<?php if (! empty($row['file_csv'])): ?>
+                            <a href="../download.php?file=<?php echo urlencode($row['file_csv'])?>"><i class="bi bi-filetype-csv"></i> CSV</a>
                         <?php endif; ?>
                     </div>
                 </div>
 
                 <div class="map-box">
-                    <?php if ($row['latitude'] && $row['longitude']) : ?>
-                        <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                    <?php if ($row['latitude'] && $row['longitude']): ?>
+                        <iframe src="https://www.google.com/maps?q=<?php echo $row['latitude']?>,<?php echo $row['longitude']?>&hl=id&z=15&output=embed"
                             width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                    <?php else : ?>
+                    <?php else: ?>
                         <em>Lokasi tidak tersedia</em>
                     <?php endif; ?>
                 </div>
@@ -110,26 +110,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <!-- Pagination -->
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+            <a href="#" class="pagination-link" data-page="<?php echo $page - 1?>">&laquo;</a>
         <?php endif; ?>
-        <?php
-        $start = max(1, $page - 2);
-        $end = min($total_pages, $page + 2);
+<?php
+    $start = max(1, $page - 2);
+        $end   = min($total_pages, $page + 2);
         if ($start > 1) {
             echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-            if ($start > 2) echo '<span>...</span>';
+            if ($start > 2) {
+                echo '<span>...</span>';
+            }
+
         }
         for ($i = $start; $i <= $end; $i++) {
             $active = ($i == $page) ? 'active' : '';
             echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
         }
         if ($end < $total_pages) {
-            if ($end < $total_pages - 1) echo '<span>...</span>';
+            if ($end < $total_pages - 1) {
+                echo '<span>...</span>';
+            }
+
             echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
         }
-        ?>
-        <?php if ($page < $total_pages): ?>
-            <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+    ?>
+<?php if ($page < $total_pages): ?>
+            <a href="#" class="pagination-link" data-page="<?php echo $page + 1?>">&raquo;</a>
         <?php endif; ?>
     </div>
 
@@ -168,32 +174,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
 <?php
     exit();
-}
+    }
 
-// Initial load - get data for first page
-$search = '';
-$page = 1;
-$records_per_page = 5;
-$offset = 0;
+    // Initial load - get data for first page
+    $search           = '';
+    $page             = 1;
+    $records_per_page = 5;
+    $offset           = 0;
 
-$base_query = "
+    $base_query = "
     FROM tambah_onsite o
     LEFT JOIN tim_onsite t ON o.id = t.id_onsite
     LEFT JOIN anggota a ON t.id_anggota = a.id
 ";
 
-$count_query = "SELECT COUNT(DISTINCT o.id) as total $base_query";
-$count_result = mysqli_query($conn, $count_query);
-$total_rows = mysqli_fetch_assoc($count_result)['total'];
-$total_pages = ceil($total_rows / $records_per_page);
+    $count_query  = "SELECT COUNT(DISTINCT o.id) as total $base_query";
+    $count_result = mysqli_query($conn, $count_query);
+    $total_rows   = mysqli_fetch_assoc($count_result)['total'];
+    $total_pages  = ceil($total_rows / $records_per_page);
 
-$data_query = "
-    SELECT DISTINCT o.* 
-    $base_query 
-    ORDER BY o.id DESC 
+    $data_query = "
+    SELECT DISTINCT o.*
+    $base_query
+    ORDER BY o.id DESC
     LIMIT $offset, $records_per_page
 ";
-$result = mysqli_query($conn, $data_query);
+    $result = mysqli_query($conn, $data_query);
 ?>
 
 <!DOCTYPE html>
@@ -203,6 +209,7 @@ $result = mysqli_query($conn, $data_query);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard Admin - ACTIVin</title>
+    <link rel="icon" href="../asset/ACTIVin.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../asset/css/dash-admin.css">
@@ -241,7 +248,7 @@ $result = mysqli_query($conn, $data_query);
         <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
         <div class="nav-container">
             <div class="nav-links">
-                <a href="dashboard-admin.php" class="<?= $current_page == 'dashboard-admin.php' ? 'active' : '' ?>">
+                <a href="dashboard-admin.php" class="<?php echo $current_page == 'dashboard-admin.php' ? 'active' : ''?>">
                     <i class="bi bi-columns-gap"></i> Dashboard
                 </a>
             </div>
@@ -260,7 +267,7 @@ $result = mysqli_query($conn, $data_query);
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="profile">
-                    <span><?= htmlspecialchars($username) ?></span>
+                    <span><?php echo htmlspecialchars($username)?></span>
                     <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
                 </div>
             </div>
@@ -271,7 +278,7 @@ $result = mysqli_query($conn, $data_query);
                 <i class="bi bi-search"></i>
             </div>
             <div class="profile d-none d-md-flex">
-                <span><?= htmlspecialchars($username) ?></span>
+                <span><?php echo htmlspecialchars($username)?></span>
                 <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
             </div>
         </div>
@@ -282,20 +289,20 @@ $result = mysqli_query($conn, $data_query);
 
         <div id="admin-data-container">
             <!-- Initial card load -->
-            <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+            <?php while ($row = mysqli_fetch_assoc($result)): ?>
                 <div class="onsite-card">
                     <div class="onsite-header">
                         <div>
-                            <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
-                            <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+                            <strong><?php echo htmlspecialchars($row['keterangan_kegiatan'])?></strong><br>
+                            <small><?php echo date('d M Y', strtotime($row['tanggal']))?> | <?php echo date('H:i', strtotime($row['jam_mulai']))?> - <?php echo date('H:i', strtotime($row['jam_selesai']))?></small>
                         </div>
                         <div class="status-section">
                             <form method="POST" action="ubah-status.php" style="display:inline-block;">
-                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-                                    <option value="Menunggu" <?= $row['status_pembayaran'] == 'Menunggu' ? 'selected' : '' ?>>Menunggu</option>
-                                    <option value="Disetujui" <?= $row['status_pembayaran'] == 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
-                                    <option value="Ditolak" <?= $row['status_pembayaran'] == 'Ditolak' ? 'selected' : '' ?>>Ditolak</option>
+                                <input type="hidden" name="id" value="<?php echo $row['id']?>">
+                                <select name="status_pembayaran" class="form-select status-dropdown" data-id="<?php echo $row['id']?>">
+                                    <option value="Menunggu" <?php echo $row['status_pembayaran'] == 'Menunggu' ? 'selected' : ''?>>Menunggu</option>
+                                    <option value="Disetujui" <?php echo $row['status_pembayaran'] == 'Disetujui' ? 'selected' : ''?>>Disetujui</option>
+                                    <option value="Ditolak" <?php echo $row['status_pembayaran'] == 'Ditolak' ? 'selected' : ''?>>Ditolak</option>
                                 </select>
                             </form>
                         </div>
@@ -305,34 +312,34 @@ $result = mysqli_query($conn, $data_query);
                         <div class="onsite-info">
                             <div><strong>Anggota:</strong><br>
                                 <?php
-                                $id_onsite = $row['id'];
-                                $anggota_result = mysqli_query($conn, "
-                                    SELECT a.nama 
+                                    $id_onsite      = $row['id'];
+                                    $anggota_result = mysqli_query($conn, "
+                                    SELECT a.nama
                                     FROM tim_onsite t
                                     JOIN anggota a ON t.id_anggota = a.id
                                     WHERE t.id_onsite = $id_onsite
                                 ");
-                                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
-                                    echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
-                                }
+                                    while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                                        echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                                    }
                                 ?>
                             </div>
-                            <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></span></div>
+                            <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?php echo number_format($row['estimasi_biaya'], 0, ',', '.')?></span></div>
                             <div class="mt-2 onsite-files">
-                                <?php if (!empty($row['dokumentasi'])): ?>
-                                    <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                                <?php if (! empty($row['dokumentasi'])): ?>
+                                    <a href="../uploads/dokumentasi/<?php echo urlencode($row['dokumentasi'])?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
                                 <?php endif; ?>
-                                <?php if (!empty($row['file_csv'])): ?>
-                                    <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+<?php if (! empty($row['file_csv'])): ?>
+                                    <a href="../download.php?file=<?php echo urlencode($row['file_csv'])?>"><i class="bi bi-filetype-csv"></i> CSV</a>
                                 <?php endif; ?>
                             </div>
                         </div>
 
                         <div class="map-box">
-                            <?php if ($row['latitude'] && $row['longitude']) : ?>
-                                <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+                            <?php if ($row['latitude'] && $row['longitude']): ?>
+                                <iframe src="https://www.google.com/maps?q=<?php echo $row['latitude']?>,<?php echo $row['longitude']?>&hl=id&z=15&output=embed"
                                     width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                            <?php else : ?>
+                            <?php else: ?>
                                 <em>Lokasi tidak tersedia</em>
                             <?php endif; ?>
                         </div>
@@ -343,26 +350,32 @@ $result = mysqli_query($conn, $data_query);
             <!-- Initial Pagination -->
             <div class="pagination">
                 <?php if ($page > 1): ?>
-                    <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+                    <a href="#" class="pagination-link" data-page="<?php echo $page - 1?>">&laquo;</a>
                 <?php endif; ?>
-                <?php
-                $start = max(1, $page - 2);
-                $end = min($total_pages, $page + 2);
-                if ($start > 1) {
-                    echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-                    if ($start > 2) echo '<span>...</span>';
-                }
-                for ($i = $start; $i <= $end; $i++) {
-                    $active = ($i == $page) ? 'active' : '';
-                    echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
-                }
-                if ($end < $total_pages) {
-                    if ($end < $total_pages - 1) echo '<span>...</span>';
-                    echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
-                }
-                ?>
-                <?php if ($page < $total_pages): ?>
-                    <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+<?php
+    $start = max(1, $page - 2);
+    $end   = min($total_pages, $page + 2);
+    if ($start > 1) {
+        echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+        if ($start > 2) {
+            echo '<span>...</span>';
+        }
+
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? 'active' : '';
+        echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+    }
+    if ($end < $total_pages) {
+        if ($end < $total_pages - 1) {
+            echo '<span>...</span>';
+        }
+
+        echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+    }
+?>
+<?php if ($page < $total_pages): ?>
+                    <a href="#" class="pagination-link" data-page="<?php echo $page + 1?>">&raquo;</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -553,7 +566,7 @@ $result = mysqli_query($conn, $data_query);
         <script>
             Swal.fire({
                 title: 'Login Berhasil',
-                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;"><?= htmlspecialchars($username) ?></span>',
+                html: '<b>Selamat datang kembali,</b><br><span style="color:#48cfcb; font-weight:bold;"><?php echo htmlspecialchars($username)?></span>',
                 icon: 'success',
                 background: '#1c1c1c',
                 color: '#ffffff',
@@ -569,14 +582,14 @@ $result = mysqli_query($conn, $data_query);
             });
         </script>
         <?php unset($_SESSION['login_success']); ?>
-    <?php endif; ?>
+<?php endif; ?>
 
     <?php if (isset($_SESSION['message'])): ?>
         <script>
             Swal.fire({
-                title: '<?= $_SESSION['message_type'] === "success" ? "Berhasil!" : "Gagal!" ?>',
-                text: '<?= addslashes($_SESSION["message"]) ?>',
-                icon: '<?= $_SESSION["message_type"] ?>',
+                title: '<?php echo $_SESSION['message_type'] === "success" ? "Berhasil!" : "Gagal!"?>',
+                text: '<?php echo addslashes($_SESSION["message"])?>',
+                icon: '<?php echo $_SESSION["message_type"]?>',
                 background: '#1c1c1c',
                 color: '#fff',
                 iconColor: '#48cfcb',
@@ -586,10 +599,10 @@ $result = mysqli_query($conn, $data_query);
             });
         </script>
         <?php
-        unset($_SESSION['message']);
-        unset($_SESSION['message_type']);
+            unset($_SESSION['message']);
+            unset($_SESSION['message_type']);
         ?>
-    <?php endif; ?>
+<?php endif; ?>
 </body>
 
 </html>

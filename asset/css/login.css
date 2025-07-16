@@ -1,248 +1,283 @@
+/* =====================================================
+   RESET CSS & FONT CONFIGURATION
+   ===================================================== */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Membuat perhitungan width/height termasuk padding dan border */
+  font-family: "Inter", sans-serif; /* Menggunakan font Inter yang modern */
 }
 
+/* =====================================================
+   BODY & MAIN LAYOUT
+   ===================================================== */
 body {
-    background-color: #48cfcb;
-    min-height: 100vh;
+  background-color: #48cfcb; /* Warna background utama (tosca/cyan) */
+  min-height: 100vh; /* Minimal tinggi layar penuh */
 }
 
 .main-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    border-radius: 20px;
+  min-height: 100vh; /* Container utama setinggi layar penuh */
+  display: flex;
+  align-items: center; /* Tengah secara vertikal */
+  justify-content: center; /* Tengah secara horizontal */
+  padding: 20px; /* Padding untuk responsivitas */
+  border-radius: 20px;
 }
 
+/* =====================================================
+   LOGIN CARD (CONTAINER UTAMA)
+   ===================================================== */
 .login-card {
-    background-color: #1e1e1e;
-    border-radius: 21px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    /* overflow: hidden; */
-    max-width: 900px;
-    width: 100%;
-    position: relative;
+  background-color: #1e1e1e; /* Background gelap untuk kontras */
+  border-radius: 21px; /* Sudut melengkung */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); /* Bayangan untuk efek depth */
+  max-width: 900px; /* Lebar maksimal card */
+  width: 100%; /* Lebar responsif */
+  position: relative; /* Untuk positioning logo */
 }
 
+/* =====================================================
+   LOGO POSITIONING
+   ===================================================== */
 .card-logo {
-    position: absolute;
-    top: 25px;
-    left: 25px;
-    width: 150px;
-    height: auto;
-    z-index: 10;
+  position: absolute; /* Posisi absolut agar bisa diletakkan di atas card */
+  top: 25px; /* Jarak dari atas */
+  left: 25px; /* Jarak dari kiri */
+  width: 150px; /* Lebar logo */
+  height: auto; /* Tinggi otomatis untuk menjaga proporsi */
+  z-index: 10; /* Layer di atas elemen lain */
 }
 
+/* =====================================================
+   WELCOME SECTION (BAGIAN KIRI)
+   ===================================================== */
 .welcome-section {
-    background: url('../test.png') no-repeat center/cover;
-    min-height: 500px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    border-radius: 20px;
+  background: url("../test.png") no-repeat center/cover; /* Background image */
+  min-height: 500px; /* Tinggi minimal */
+  display: flex;
+  justify-content: center; /* Tengah horizontal */
+  align-items: center; /* Tengah vertikal */
+  position: relative; /* Untuk positioning child elements */
+  border-radius: 20px;
 }
 
+/* Text welcome styling */
 .welcome-text {
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  color: #fff; /* Warna putih untuk kontras dengan background */
+  display: flex;
+  flex-direction: column; /* Susun vertikal */
+  align-items: flex-start; /* Align ke kiri */
 }
 
 .welcome-text p {
-    font-size: 3rem;
-    margin: 0;
-    line-height: 1.2;
+  font-size: 3rem; /* Ukuran font besar */
+  margin: 0;
+  line-height: 1.2; /* Line height untuk spacing */
 }
 
 .welcome-section h2 {
-    font-weight: bold;
-    font-size: 3rem;
-    margin: 0;
-    line-height: 1.2;
+  font-weight: bold;
+  font-size: 3rem;
+  margin: 0;
+  line-height: 1.2;
 }
 
+/* =====================================================
+   LOGIN SECTION (BAGIAN KANAN)
+   ===================================================== */
 .login-section {
-    background: #1e1e1e;
-    color: #fff;
-    padding: 50px 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 500px;
-    border-radius: 20px;
+  background: #1e1e1e; /* Background gelap */
+  color: #fff; /* Text putih */
+  padding: 50px 40px; /* Padding dalam */
+  display: flex;
+  flex-direction: column; /* Susun vertikal */
+  justify-content: center; /* Tengah vertikal */
+  min-height: 500px; /* Tinggi minimal sama dengan welcome section */
+  border-radius: 20px;
 }
 
+/* Styling untuk heading dan subtitle */
 .login-section h2 {
-    font-size: 28px;
-    margin-bottom: 10px;
+  font-size: 28px;
+  margin-bottom: 4px;/* Jarak bawah */
 }
 
 .login-section .subtitle {
-    margin-bottom: 30px;
-    font-size: 14px;
-    color: #ccc;
+  margin-bottom: 10px;/* Jarak bawah */
+  font-size: 14px;
+  color: #ccc; /* Warna abu-abu untuk subtitle */
 }
 
+/* =====================================================
+   ALERT/ERROR MESSAGE STYLING
+   ===================================================== */
 .custom-alert {
-    background-color: #ffe6e6;
-    color: #a94442;
-    padding: 12px 15px;
-    border: 1px solid #f5c6cb;
-    border-left: 5px solid #dc3545;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideIn 0.4s ease forwards;
+  background-color: #ffe6e6; /* Background merah muda untuk error */
+  color: #a94442; /* Text merah gelap */
+  padding: 12px 15px;
+  border: 1px solid #f5c6cb; /* Border merah muda */
+  border-left: 5px solid #dc3545; /* Border kiri merah tebal untuk aksen */
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center; /* Align icon dan text */
+  gap: 10px; /* Jarak antara icon dan text */
+  animation: slideIn 0.4s ease forwards; /* Animasi masuk */
 }
 
 .alert-icon {
-    font-size: 18px;
-    flex-shrink: 0;
+  font-size: 18px;
+  flex-shrink: 0; /* Icon tidak mengecil */
 }
 
+/* =====================================================
+   INPUT FIELDS STYLING
+   ===================================================== */
 .input-group-custom {
-    position: relative;
-    margin-bottom: 20px;
+  font-weight: bold; /* Font bold untuk label */
+  position: relative; /* Untuk positioning icon */
+  margin-bottom: 12px; /* Jarak antar input */
 }
 
 .form-control-custom {
-    width: 100%;
-    height: 50px;
-    padding: 12px 45px;
-    font-size: 14px;
-    border: 1px solid #fff;
-    border-radius: 8px;
-    background: #1c1c1c;
-    color: #fff;
-    transition: all 0.3s ease;
+  width: 100%;
+  height: 50px;
+  padding: 12px 45px; /* Padding kiri/kanan lebih besar untuk icon */
+  font-size: 14px;
+  border: 1px solid #fff; /* Border putih */
+  border-radius: 8px;
+  background: #1c1c1c; /* Background gelap */
+  color: #fff; /* Text putih */
+  transition: all 0.3s ease; /* Animasi smooth untuk semua perubahan */
 }
 
+/* Focus state untuk input */
 .form-control-custom:focus {
-    border-color: #48cfcb;
-    box-shadow: 0 0 0 2px rgba(72, 207, 203, 0.2);
-    background: #2a2a2a;
-    color: #fff;
-    outline: none;
+  border-color: #48cfcb; /* Border berubah warna saat fokus */
+  box-shadow: 0 0 0 2px rgba(72, 207, 203, 0.2); /* Glow effect */
+  background: #2a2a2a; /* Background sedikit lebih terang */
+  color: #fff;
+  outline: none; /* Hilangkan outline default browser */
 }
 
+/* Placeholder text styling */
 .form-control-custom::placeholder {
-    color: #999;
+  color: #999; /* Warna abu-abu untuk placeholder */
 }
 
+/* =====================================================
+   INPUT ICONS STYLING
+   ===================================================== */
 .input-icon-left {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 18px;
-    color: #999;
-    z-index: 5;
+  position: absolute;
+  left: 15px; /* Posisi dari kiri */
+  top: 50%; /* Tengah vertikal */
+  transform: translateY(-50%); /* Adjust posisi ke tengah exact */
+  font-size: 18px;
+  color: #999; /* Warna abu-abu */
+  z-index: 5; /* Layer di atas input */
 }
 
 .input-icon-right {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 18px;
-    color: #999;
-    cursor: pointer;
-    z-index: 5;
+  position: absolute;
+  right: 15px; /* Posisi dari kanan */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #999;
+  cursor: pointer; /* Cursor pointer untuk interaktivitas */
+  z-index: 5;
 }
 
+/* =====================================================
+   LOGIN BUTTON STYLING
+   ===================================================== */
 .btn-login {
-    width: 100%;
-    padding: 15px;
-    background: #48cfcb;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  width: 100%;
+  padding: 15px;
+  background: #48cfcb; /* Background warna accent */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600; /* Font semi-bold */
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Animasi smooth */
 }
 
+/* Hover effect untuk button */
 .btn-login:hover {
-    background: #227779;
-    transform: translateY(-1px);
+  background: #227779; /* Warna lebih gelap saat hover */
+  transform: translateY(-1px); /* Efek "naik" sedikit */
 }
 
-.g-recaptcha {
-
-    transform: scale(0.9);
-    transform-origin: 0 0;
-    max-width: 100%;
-    z-index: 10;
-    position: relative;
-}
-
-/* Add these CSS rules to your login.css file */
-
-/* Mobile responsive improvements for logo positioning */
+/* =====================================================
+   RESPONSIVE DESIGN - TABLET (768px ke bawah)
+   ===================================================== */
 @media (max-width: 768px) {
-    .card-logo {
-        width: 120px;
-        top: 15px;
-        left: 15px;
-        /* Add z-index to ensure logo stays on top */
-        z-index: 20;
-    }
+  .card-logo {
+    width: 90px; /* Logo lebih kecil */
+    top: 15px;
+    left: 15px;
+    z-index: 20; /* Layer lebih tinggi */
+  }
 
-    .login-section {
-        padding: 60px 25px 30px 25px; /* Increased top padding to make room for logo */
-        min-height: auto;
-        order: 1;
-    }
+  .login-section {
+    padding: 60px 25px 30px 25px; /* Padding atas lebih besar untuk logo */
+    min-height: auto; /* Tinggi otomatis */
+    order: 1; /* Urutan elemen */
+  }
 
-    .login-section h2 {
-        font-size: 24px;
-        margin-top: 20px; /* Add margin-top to push login text down */
-    }
+  .login-section h2 {
+    font-size: 24px;
+    margin-top: 18px; /* Margin atas untuk jarak dari logo */
+  }
 }
 
+/* =====================================================
+   RESPONSIVE DESIGN - MOBILE (576px ke bawah)
+   ===================================================== */
 @media (max-width: 576px) {
-    .card-logo {
-        width: 100px;
-        top: 10px;
-        left: 10px;
-        z-index: 20;
-    }
+  .card-logo {
+    width: 90px; /* Logo lebih kecil lagi */
+    top: 8px;
+    left: 10px;
+    z-index: 20;
+  }
 
-    .login-section {
-        padding: 80px 20px 25px 20px; /* Even more top padding for smaller screens */
-        border-radius: 15px;
-    }
+  .login-section {
+    padding: 80px 20px 25px 20px; /* Padding atas lebih besar */
+    border-radius: 15px; /* Border radius lebih kecil */
+  }
 
-    .login-section h2 {
-        font-size: 22px;
-        text-align: center;
-        margin-top: 10px; /* Additional margin to separate from logo */
-    }
+  .login-section h2 {
+    font-size: 22px;
+    text-align: center; /* Text center untuk mobile */
+    margin-top: 10px;
+  }
 
-    .subtitle {
-        text-align: center;
-        margin-top: 5px;
-    }
+  .subtitle {
+    text-align: center; /* Subtitle juga center */
+    margin-top: 5px;
+  }
 }
 
-/* Alternative approach - you can also hide the logo on very small screens */
+/* =====================================================
+   RESPONSIVE DESIGN - MOBILE KECIL (480px ke bawah)
+   ===================================================== */
 @media (max-width: 480px) {
-    .card-logo {
-        display: none; /* Uncomment this line if you want to hide logo on very small screens */
-    }
-    
-    .login-section {
-        padding: 30px 20px 25px 20px; /* Reduce padding if logo is hidden */
-    }
+
+  .login-section {
+    padding: 30px 20px 25px 20px; /* Padding dikurangi karena logo disembunyikan */
+  }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #1c1c1c inset !important;
+  -webkit-text-fill-color: #fff !important;
+  transition: background-color 5000s ease-in-out 0s;
 }

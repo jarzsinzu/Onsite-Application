@@ -1,52 +1,52 @@
 <?php
-session_start();
-require('../include/koneksi.php');
+    session_start();
+    require '../include/koneksi.php';
 
-if (!isset($_SESSION['user']) || !isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit();
-}
+    if (! isset($_SESSION['user']) || ! isset($_SESSION['user_id'])) {
+        header("Location: login.php");
+        exit();
+    }
 
-$current_page = basename($_SERVER['PHP_SELF']);
-$username = $_SESSION['user'];
-$user_id = $_SESSION['user_id'];
+    $current_page = basename($_SERVER['PHP_SELF']);
+    $username     = $_SESSION['user'];
+    $user_id      = $_SESSION['user_id'];
 
-// Handle AJAX request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
-  $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
-  $page = max((int)($_POST['page'] ?? 1), 1);
-  $limit = 5;
-  $offset = ($page - 1) * $limit;
+    // Handle AJAX request
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
+        $search = mysqli_real_escape_string($conn, $_POST['search'] ?? '');
+        $page   = max((int) ($_POST['page'] ?? 1), 1);
+        $limit  = 5;
+        $offset = ($page - 1) * $limit;
 
-  // Hitung total data untuk pagination
-  $count_sql = "
+        // Hitung total data untuk pagination
+        $count_sql = "
     SELECT COUNT(DISTINCT to1.id) as total
     FROM tambah_onsite to1
     LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
     LEFT JOIN anggota a ON t.id_anggota = a.id
-    WHERE to1.user_id = $user_id 
+    WHERE to1.user_id = $user_id
       AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
       AND (
-        to1.tanggal LIKE '%$search%' 
+        to1.tanggal LIKE '%$search%'
         OR to1.keterangan_kegiatan LIKE '%$search%'
         OR a.nama LIKE '%$search%'
       )
   ";
 
-  $total_result = mysqli_query($conn, $count_sql);
-  $total_rows = mysqli_fetch_assoc($total_result)['total'];
-  $total_pages = ceil($total_rows / $limit);
+        $total_result = mysqli_query($conn, $count_sql);
+        $total_rows   = mysqli_fetch_assoc($total_result)['total'];
+        $total_pages  = ceil($total_rows / $limit);
 
-  // Ambil data berdasarkan pencarian & halaman
-  $sql = "
-    SELECT DISTINCT to1.* 
+        // Ambil data berdasarkan pencarian & halaman
+        $sql = "
+    SELECT DISTINCT to1.*
     FROM tambah_onsite to1
     LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
     LEFT JOIN anggota a ON t.id_anggota = a.id
-    WHERE to1.user_id = $user_id 
+    WHERE to1.user_id = $user_id
       AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
       AND (
-        to1.tanggal LIKE '%$search%' 
+        to1.tanggal LIKE '%$search%'
         OR to1.keterangan_kegiatan LIKE '%$search%'
         OR a.nama LIKE '%$search%'
       )
@@ -54,28 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     LIMIT $offset, $limit
   ";
 
-  $result = mysqli_query($conn, $sql);
-?>
+        $result = mysqli_query($conn, $sql);
+    ?>
 
   <!-- Card Content -->
-  <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+  <?php while ($row = mysqli_fetch_assoc($result)): ?>
     <div class="onsite-card">
       <div class="onsite-header">
         <div>
-          <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
-          <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
-        </div>
-        <div>
-          <?php
-          $status = $row['status_pembayaran'];
-          $statusClass = match ($status) {
-            'Menunggu' => 'warning',
-            'Disetujui' => 'success',
-            'Ditolak' => 'danger',
-            default => 'secondary'
-          };
-          ?>
-          <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+          <strong><?php echo htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+          <small><?php echo date('d M Y', strtotime($row['tanggal'])) ?> |<?php echo date('H:i', strtotime($row['jam_mulai'])) ?> -<?php echo date('H:i', strtotime($row['jam_selesai'])) ?></small>
         </div>
       </div>
 
@@ -83,34 +71,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         <div class="onsite-info">
           <div><strong>Anggota:</strong><br>
             <?php
-            $id_onsite = $row['id'];
-            $anggota_result = mysqli_query($conn, "
-              SELECT a.nama 
+                $id_onsite      = $row['id'];
+                    $anggota_result = mysqli_query($conn, "
+              SELECT a.nama
               FROM tim_onsite t
               JOIN anggota a ON t.id_anggota = a.id
               WHERE t.id_onsite = $id_onsite
             ");
-            while ($anggota = mysqli_fetch_assoc($anggota_result)) {
-              echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
-            }
-            ?>
+                    while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                        echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                    }
+                ?>
           </div>
-          <div class="mt-2"><strong>Biaya:</strong> Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+          <div class="mt-2"><strong>Biaya:</strong> Rp.                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
           <div class="mt-2 onsite-files">
-            <?php if (!empty($row['dokumentasi'])): ?>
-              <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+            <?php if (! empty($row['dokumentasi'])): ?>
+              <a href="../uploads/dokumentasi/<?php echo urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
             <?php endif; ?>
-            <?php if (!empty($row['file_csv'])): ?>
-              <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+<?php if (! empty($row['file_csv'])): ?>
+              <a href="../download.php?file=<?php echo urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
             <?php endif; ?>
           </div>
         </div>
 
         <div class="map-box">
-          <?php if ($row['latitude'] && $row['longitude']) : ?>
-            <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+          <?php if ($row['latitude'] && $row['longitude']): ?>
+            <iframe src="https://www.google.com/maps?q=<?php echo $row['latitude'] ?>,<?php echo $row['longitude'] ?>&hl=id&z=15&output=embed"
               width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-          <?php else : ?>
+          <?php else: ?>
             <em>Lokasi tidak tersedia</em>
           <?php endif; ?>
         </div>
@@ -121,64 +109,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
   <!-- Pagination -->
   <div class="pagination">
     <?php if ($page > 1): ?>
-      <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+      <a href="#" class="pagination-link" data-page="<?php echo $page - 1 ?>">&laquo;</a>
     <?php endif; ?>
-    <?php
+<?php
     $start = max(1, $page - 2);
-    $end = min($total_pages, $page + 2);
-    if ($start > 1) {
-      echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-      if ($start > 2) echo '<span>...</span>';
-    }
-    for ($i = $start; $i <= $end; $i++) {
-      $active = ($i == $page) ? 'active' : '';
-      echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
-    }
-    if ($end < $total_pages) {
-      if ($end < $total_pages - 1) echo '<span>...</span>';
-      echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
-    }
+        $end   = min($total_pages, $page + 2);
+        if ($start > 1) {
+            echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+            if ($start > 2) {
+                echo '<span>...</span>';
+            }
+
+        }
+        for ($i = $start; $i <= $end; $i++) {
+            $active = ($i == $page) ? 'active' : '';
+            echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+        }
+        if ($end < $total_pages) {
+            if ($end < $total_pages - 1) {
+                echo '<span>...</span>';
+            }
+
+            echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+        }
     ?>
-    <?php if ($page < $total_pages): ?>
-      <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+<?php if ($page < $total_pages): ?>
+      <a href="#" class="pagination-link" data-page="<?php echo $page + 1 ?>">&raquo;</a>
     <?php endif; ?>
   </div>
 
 <?php
-  exit();
-}
+    exit();
+    }
 
-// Initial load - get data for first page
-$search = '';
-$page = 1;
-$limit = 5;
-$offset = 0;
+    // Initial load - get data for first page
+    $search = '';
+    $page   = 1;
+    $limit  = 5;
+    $offset = 0;
 
-$count_sql = "
+    $count_sql = "
   SELECT COUNT(DISTINCT to1.id) as total
   FROM tambah_onsite to1
   LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
   LEFT JOIN anggota a ON t.id_anggota = a.id
-  WHERE to1.user_id = $user_id 
+  WHERE to1.user_id = $user_id
     AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
 ";
 
-$total_result = mysqli_query($conn, $count_sql);
-$total_rows = mysqli_fetch_assoc($total_result)['total'];
-$total_pages = ceil($total_rows / $limit);
+    $total_result = mysqli_query($conn, $count_sql);
+    $total_rows   = mysqli_fetch_assoc($total_result)['total'];
+    $total_pages  = ceil($total_rows / $limit);
 
-$sql = "
-  SELECT DISTINCT to1.* 
+    $sql = "
+  SELECT DISTINCT to1.*
   FROM tambah_onsite to1
   LEFT JOIN tim_onsite t ON to1.id = t.id_onsite
   LEFT JOIN anggota a ON t.id_anggota = a.id
-  WHERE to1.user_id = $user_id 
+  WHERE to1.user_id = $user_id
     AND to1.status_pembayaran IN ('Disetujui', 'Ditolak')
   ORDER BY to1.id DESC
   LIMIT $offset, $limit
 ";
 
-$result = mysqli_query($conn, $sql);
+    $result = mysqli_query($conn, $sql);
 ?>
 
 <!DOCTYPE html>
@@ -189,6 +183,7 @@ $result = mysqli_query($conn, $sql);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>History User - ACTIVin</title>
 
+  <link rel="icon" href="../asset/ACTIVin.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../asset/css/history-user.css">
@@ -216,10 +211,10 @@ $result = mysqli_query($conn, $sql);
     <img src="../asset/logo-E.png" alt="Logo" class="card-logo">
     <div class="nav-container">
       <div class="nav-links">
-        <a href="dashboard-user.php" class="<?= $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
+        <a href="dashboard-user.php" class="<?php echo $current_page == 'dashboard-user.php' ? 'active' : '' ?>">
           <i class="bi bi-columns-gap"></i> Dashboard
         </a>
-        <a href="history.php" class="<?= $current_page == 'history.php' ? 'active' : '' ?>">
+        <a href="history.php" class="<?php echo $current_page == 'history.php' ? 'active' : '' ?>">
           <i class="bi bi-clock-history"></i> History
         </a>
       </div>
@@ -240,7 +235,7 @@ $result = mysqli_query($conn, $sql);
           <i class="bi bi-list"></i>
         </button>
         <div class="profile">
-          <span><?= htmlspecialchars($username) ?></span>
+          <span><?php echo htmlspecialchars($username) ?></span>
           <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
         </div>
       </div>
@@ -251,7 +246,7 @@ $result = mysqli_query($conn, $sql);
         <i class="bi bi-search"></i>
       </div>
       <div class="profile d-none d-md-flex">
-        <span><?= htmlspecialchars($username) ?></span>
+        <span><?php echo htmlspecialchars($username) ?></span>
         <i class="fas fa-user-circle fa-2x" style="color:#1c1c1c; font-size:35px;"></i>
       </div>
     </div>
@@ -262,24 +257,24 @@ $result = mysqli_query($conn, $sql);
 
     <div id="data-container">
       <!-- Initial card load -->
-      <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+      <?php while ($row = mysqli_fetch_assoc($result)): ?>
         <div class="onsite-card">
           <div class="onsite-header">
             <div>
-              <strong><?= htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
-              <small><?= date('d M Y', strtotime($row['tanggal'])) ?> | <?= date('H:i', strtotime($row['jam_mulai'])) ?> - <?= date('H:i', strtotime($row['jam_selesai'])) ?></small>
+              <strong><?php echo htmlspecialchars($row['keterangan_kegiatan']) ?></strong><br>
+              <small><?php echo date('d M Y', strtotime($row['tanggal'])) ?> |<?php echo date('H:i', strtotime($row['jam_mulai'])) ?> -<?php echo date('H:i', strtotime($row['jam_selesai'])) ?></small>
             </div>
             <div>
               <?php
-              $status = $row['status_pembayaran'];
-              $statusClass = match ($status) {
-                'Menunggu' => 'warning',
-                'Disetujui' => 'success',
-                'Ditolak' => 'danger',
-                default => 'secondary'
-              };
+                  $status      = $row['status_pembayaran'];
+                  $statusClass = match ($status) {
+                      'Menunggu' => 'warning',
+                      'Disetujui' => 'success',
+                      'Ditolak' => 'danger',
+                      default => 'secondary'
+                  };
               ?>
-              <span class="badge-status <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
+              <span class="badge-status bg-<?php echo $statusClass ?>"><?php echo htmlspecialchars($status) ?></span>
             </div>
           </div>
 
@@ -287,34 +282,34 @@ $result = mysqli_query($conn, $sql);
             <div class="onsite-info">
               <div><strong>Anggota:</strong><br>
                 <?php
-                $id_onsite = $row['id'];
-                $anggota_result = mysqli_query($conn, "
-                  SELECT a.nama 
+                    $id_onsite      = $row['id'];
+                    $anggota_result = mysqli_query($conn, "
+                  SELECT a.nama
                   FROM tim_onsite t
                   JOIN anggota a ON t.id_anggota = a.id
                   WHERE t.id_onsite = $id_onsite
                 ");
-                while ($anggota = mysqli_fetch_assoc($anggota_result)) {
-                  echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
-                }
+                    while ($anggota = mysqli_fetch_assoc($anggota_result)) {
+                        echo '<span class="onsite-badge">' . htmlspecialchars($anggota['nama']) . '</span>';
+                    }
                 ?>
               </div>
-              <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp. <?= number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
+              <div class="mt-2"><strong>Biaya:</strong> <span style="color: #006400; font-weight:bold;">Rp.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo number_format($row['estimasi_biaya'], 0, ',', '.') ?></div>
               <div class="mt-2 onsite-files">
-                <?php if (!empty($row['dokumentasi'])): ?>
-                  <a href="../uploads/<?= urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
+                <?php if (! empty($row['dokumentasi'])): ?>
+                  <a href="../uploads/dokumentasi/<?php echo urlencode($row['dokumentasi']) ?>" target="_blank"><i class="bi bi-folder2-open"></i> Dokumentasi</a>
                 <?php endif; ?>
-                <?php if (!empty($row['file_csv'])): ?>
-                  <a href="../download.php?file=<?= urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
+<?php if (! empty($row['file_csv'])): ?>
+                  <a href="../download.php?file=<?php echo urlencode($row['file_csv']) ?>"><i class="bi bi-filetype-csv"></i> CSV</a>
                 <?php endif; ?>
               </div>
             </div>
 
             <div class="map-box">
-              <?php if ($row['latitude'] && $row['longitude']) : ?>
-                <iframe src="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>&hl=id&z=15&output=embed"
+              <?php if ($row['latitude'] && $row['longitude']): ?>
+                <iframe src="https://www.google.com/maps?q=<?php echo $row['latitude'] ?>,<?php echo $row['longitude'] ?>&hl=id&z=15&output=embed"
                   width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-              <?php else : ?>
+              <?php else: ?>
                 <em>Lokasi tidak tersedia</em>
               <?php endif; ?>
             </div>
@@ -325,185 +320,151 @@ $result = mysqli_query($conn, $sql);
       <!-- Initial Pagination -->
       <div class="pagination">
         <?php if ($page > 1): ?>
-          <a href="#" class="pagination-link" data-page="<?= $page - 1 ?>">&laquo;</a>
+          <a href="#" class="pagination-link" data-page="<?php echo $page - 1 ?>">&laquo;</a>
         <?php endif; ?>
-        <?php
-        $start = max(1, $page - 2);
-        $end = min($total_pages, $page + 2);
-        if ($start > 1) {
-          echo '<a href="#" class="pagination-link" data-page="1">1</a>';
-          if ($start > 2) echo '<span>...</span>';
+<?php
+    $start = max(1, $page - 2);
+    $end   = min($total_pages, $page + 2);
+    if ($start > 1) {
+        echo '<a href="#" class="pagination-link" data-page="1">1</a>';
+        if ($start > 2) {
+            echo '<span>...</span>';
         }
-        for ($i = $start; $i <= $end; $i++) {
-          $active = ($i == $page) ? 'active' : '';
-          echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? 'active' : '';
+        echo "<a href='#' class='pagination-link $active' data-page='$i'>$i</a>";
+    }
+    if ($end < $total_pages) {
+        if ($end < $total_pages - 1) {
+            echo '<span>...</span>';
         }
-        if ($end < $total_pages) {
-          if ($end < $total_pages - 1) echo '<span>...</span>';
-          echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
-        }
-        ?>
-        <?php if ($page < $total_pages): ?>
-          <a href="#" class="pagination-link" data-page="<?= $page + 1 ?>">&raquo;</a>
+
+        echo '<a href="#" class="pagination-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+    }
+?>
+<?php if ($page < $total_pages): ?>
+          <a href="#" class="pagination-link" data-page="<?php echo $page + 1 ?>">&raquo;</a>
         <?php endif; ?>
       </div>
     </div>
   </div>
 
-  <script>
-    // Auto Logout
-    let idleTime = 0;
-    const idleLimit = 2 * 60; // 2 menit
-    const logoutDelay = 30; // 30 detik
-    let countdown = logoutDelay;
-    let countdownInterval;
-    let logoutTimeout;
+ <script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Auto Logout
+  let idleTime = 0;
+  const idleLimit = 2 * 60;
+  const logoutDelay = 30;
+  let countdown = logoutDelay;
+  let countdownInterval;
+  let logoutTimeout;
 
-    function resetIdleTime() {
-      idleTime = 0;
-      // Tidak menutup popup meskipun user aktif
+  function resetIdleTime() {
+    idleTime = 0;
+  }
+
+  document.onmousemove = resetIdleTime;
+  document.onkeypress = resetIdleTime;
+  document.onscroll = resetIdleTime;
+  document.onclick = resetIdleTime;
+
+  setInterval(() => {
+    idleTime++;
+    if (idleTime === idleLimit) {
+      showIdleWarning();
     }
+  }, 1000);
 
-    // Tangkap semua aktivitas
-    document.onmousemove = resetIdleTime;
-    document.onkeypress = resetIdleTime;
-    document.onscroll = resetIdleTime;
-    document.onclick = resetIdleTime;
+  function showIdleWarning() {
+    const warning = document.getElementById('idle-warning');
+    warning.style.display = 'flex';
+    countdown = logoutDelay;
+    document.getElementById('countdown').textContent = countdown;
 
-    // Hitung waktu idle setiap detik
-    setInterval(() => {
-      idleTime++;
-      if (idleTime === idleLimit) {
-        showIdleWarning();
-      }
+    countdownInterval = setInterval(() => {
+      countdown--;
+      document.getElementById('countdown').textContent = countdown;
     }, 1000);
 
-    function showIdleWarning() {
-      const warning = document.getElementById('idle-warning');
-      warning.style.display = 'flex'; // gunakan flex jika pakai center align
-      countdown = logoutDelay;
-      document.getElementById('countdown').textContent = countdown;
+    logoutTimeout = setTimeout(() => {
+      window.location.href = '../logout.php?reason=idle';
+    }, logoutDelay * 1000);
+  }
 
-      // Jalankan hitung mundur
-      countdownInterval = setInterval(() => {
-        countdown--;
-        document.getElementById('countdown').textContent = countdown;
-      }, 1000);
+  function stayLoggedIn() {
+    clearInterval(countdownInterval);
+    clearTimeout(logoutTimeout);
+    document.getElementById('idle-warning').style.display = 'none';
+    idleTime = 0;
+  }
 
-      // Logout otomatis
-      logoutTimeout = setTimeout(() => {
-        window.location.href = '../logout.php?reason=idle';
-      }, logoutDelay * 1000);
-    }
+  // Sidebar mobile toggle
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    function stayLoggedIn() {
-      clearInterval(countdownInterval);
-      clearTimeout(logoutTimeout);
-      document.getElementById('idle-warning').style.display = 'none';
-      idleTime = 0;
-    }
+  mobileMenuToggle?.addEventListener('click', function () {
+    sidebar.classList.add('active');
+    sidebarOverlay.classList.add('active');
+    document.body.style.overflow = "hidden";
+  });
 
-    // Search and pagination functionality
-    function loadHistory(page = 1) {
-      const keyword = document.getElementById("search-input").value;
-      const formData = new FormData();
-      formData.append("search", keyword);
-      formData.append("page", page);
-      formData.append("ajax", "1");
+  sidebarOverlay?.addEventListener('click', function () {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+    document.body.style.overflow = "auto";
+  });
 
-      fetch(window.location.href, {
-          method: "POST",
-          body: formData
-        })
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("data-container").innerHTML = html;
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
-    }
-
-    // Search input event
-    document.getElementById("search-input").addEventListener("input", function() {
-      loadHistory(1);
-    });
-
-    // Pagination click event
-    document.addEventListener("click", function(e) {
-      if (e.target.classList.contains("pagination-link")) {
-        e.preventDefault();
-        const page = e.target.getAttribute("data-page");
-        loadHistory(page);
-      }
-    });
-
-    // Mobile menu functionality
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-    mobileMenuToggle?.addEventListener('click', function() {
-      sidebar.classList.add('active');
-      sidebarOverlay.classList.add('active');
-    });
-
-    sidebarOverlay?.addEventListener('click', function() {
+  // Close sidebar on link click (mobile)
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.nav-links a') && window.innerWidth <= 768) {
       sidebar.classList.remove('active');
       sidebarOverlay.classList.remove('active');
-    });
-
-    // Search and pagination functionality
-    function loadHistory(page = 1) {
-      const keyword = document.getElementById("search-input").value;
-      const formData = new FormData();
-      formData.append("search", keyword);
-      formData.append("page", page);
-      formData.append("ajax", "1");
-
-      fetch(window.location.href, {
-          method: "POST",
-          body: formData
-        })
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("data-container").innerHTML = html;
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
     }
+  });
 
-    // Search input event
-    document.getElementById("search-input").addEventListener("input", function() {
-      loadHistory(1);
-    });
+  // Close sidebar on resize
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 768) {
+      sidebar.classList.remove('active');
+      sidebarOverlay.classList.remove('active');
+    }
+  });
 
-    // Pagination click event
-    document.addEventListener("click", function(e) {
-      if (e.target.classList.contains("pagination-link")) {
-        e.preventDefault();
-        const page = e.target.getAttribute("data-page");
-        loadHistory(page);
-      }
-    });
+  // Load history function
+  function loadHistory(page = 1) {
+    const keyword = document.getElementById("search-input").value;
+    const formData = new FormData();
+    formData.append("search", keyword);
+    formData.append("page", page);
+    formData.append("ajax", "1");
 
-    // Auto-close sidebar when clicking nav link on mobile
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('.nav-links a') && window.innerWidth <= 768) {
-        sidebar.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-      }
-    });
+    fetch(window.location.href, {
+      method: "POST",
+      body: formData
+    })
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("data-container").innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
 
-    // Close sidebar on window resize if mobile
-    window.addEventListener('resize', function() {
-      if (window.innerWidth > 768) {
-        sidebar.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-      }
-    });
-  </script>
-</body>
+  // Event listener untuk pencarian dan pagination
+  document.getElementById("search-input")?.addEventListener("input", function () {
+    loadHistory(1);
+  });
 
-</html>
+  document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("pagination-link")) {
+      e.preventDefault();
+      const page = e.target.getAttribute("data-page");
+      loadHistory(page);
+    }
+  });
+});
+</script>
