@@ -7,10 +7,10 @@
     /* =====================================================
    KONFIGURASI LDAP (LIGHTWEIGHT DIRECTORY ACCESS PROTOCOL)
    ===================================================== */
-    $ldap_server = "ldap://172.10.10.70";  // Server LDAP (Active Directory)
-    $ldap_port   = 663;                    // Port LDAP
-    $domain      = "training.local";       // Domain untuk autentikasi
-    $base_dn     = "DC=training,DC=local"; // Base Distinguished Name untuk pencarian
+    $ldap_server = "ldap://172.10.10.61";  // Server LDAP (Active Directory)
+    $ldap_port   = 389;                    // Port LDAP
+    $domain      = "nuc.local";       // Domain untuk autentikasi
+    $base_dn     = "DC=nuc,DC=local"; // Base Distinguished Name untuk pencarian
 
     $message = ""; // Variable untuk menyimpan pesan error/success
 
