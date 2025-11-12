@@ -1,5 +1,8 @@
 FROM php:8.2.12-apache
 
+# Ganti port Apache ke 8080 biar bisa jalan non-root
+RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+
 # Install LDAP + MySQLi
 RUN apt-get update \
   && apt-get install -y libldap2-dev \
@@ -23,3 +26,9 @@ RUN echo '<Directory /var/www/html/>\n\
 # Pastikan folder uploads bisa diakses
 RUN mkdir -p /var/www/html/uploads \
   && chown -R www-data:www-data /var/www/html/uploads
+
+  # Expose port baru
+EXPOSE 8080
+
+# Jalankan Apache di foreground
+CMD ["apache2-foreground"]
