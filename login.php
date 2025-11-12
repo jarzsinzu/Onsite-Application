@@ -28,7 +28,7 @@
         /* =====================================================
      VALIDASI RECAPTCHA
      ===================================================== */
-        if (isset($_POST['recaptcha_token'])) {
+       /* if (isset($_POST['recaptcha_token'])) {
             $token  = $_POST['recaptcha_token'];
             $secret = '6LeixnorAAAAAOQ98Ugrhq9pLSDjpXtf-liPHNDS';
 
@@ -45,7 +45,7 @@
                 // Login berhasil
             } else {
                 $message = "Verifikasi captcha gagal. Score: " . $captcha_success->score;
-            }
+            } */
 
             /* =====================================================
        VALIDASI INPUT FORM
@@ -194,7 +194,7 @@
     <!-- =====================================================
        LOAD RECAPTCHA SCRIPT
        ===================================================== -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6LeixnorAAAAAFNnaCCwBkvHSuTTshjUBH-G1rOW"></script>
+  <!-- <script src="https://www.google.com/recaptcha/api.js?render=6LeixnorAAAAAFNnaCCwBkvHSuTTshjUBH-G1rOW"></script> -->
 </head>
 
 <body>
@@ -257,7 +257,7 @@
                 </div>
 
                 <!-- reCAPTCHA -->
-                <input type="hidden" name="recaptcha_token" id="recaptchaToken">
+                <!-- <input type="hidden" name="recaptcha_token" id="recaptchaToken"> -->
 
                 <!-- Submit Button -->
                 <button type="submit" class="btn-login">Login</button>
@@ -356,20 +356,20 @@
       });
     });
 
-    /* =====================================================
-        RECAPTCHA V3 INTEGRATION
-       ===================================================== */
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Cegah submit langsung
+    // /* =====================================================
+    //     RECAPTCHA V3 INTEGRATION
+    //    ===================================================== */
+    // document.getElementById('loginForm').addEventListener('submit', function(e) {
+    // e.preventDefault(); // Cegah submit langsung
 
-    grecaptcha.execute('6LeixnorAAAAAFNnaCCwBkvHSuTTshjUBH-G1rOW', {action: 'login'}).then(function(token) {
-        // Masukkan token ke hidden field
-        document.getElementById('recaptchaToken').value = token;
+    // grecaptcha.execute('6LeixnorAAAAAFNnaCCwBkvHSuTTshjUBH-G1rOW', {action: 'login'}).then(function(token) {
+    //     // Masukkan token ke hidden field
+    //     document.getElementById('recaptchaToken').value = token;
 
-        // Submit form setelah dapat token
-        this.submit();
-    }.bind(this));
-    });
+    //     // Submit form setelah dapat token
+    //     this.submit();
+    // }.bind(this));
+    // });
   </script>
 
 </body>
