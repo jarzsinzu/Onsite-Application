@@ -1,4 +1,4 @@
-FROM php:8.2.12-apache
+FROM php:8.2.12-apache--bookworm-slim
 
 # Install LDAP + MySQLi
 RUN apt-get update \
