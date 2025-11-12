@@ -48,8 +48,12 @@ function simpanData($conn, $data, $user_id)
 if (isset($_POST['simpan'])) {
     $user_id = $_POST['user_id'];
     $status_pembayaran = 'Menunggu';
-    $upload_dir_dok = '../uploads/dokumentasi/';
-    $upload_dir_csv = '../uploads/csv/';
+// Tentukan base directory secara dinamis (naik 1 folder dari /user/)
+$base_dir = dirname(__DIR__);
+
+// Path upload otomatis sesuai lokasi project (bisa jalan di lokal & server)
+$upload_dir_dok = $base_dir . '/uploads/dokumentasi/';
+$upload_dir_csv = $base_dir . '/uploads/csv/';
     $dokumentasi = '';
     $file_csv = '';
 
