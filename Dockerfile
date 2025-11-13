@@ -25,7 +25,10 @@ RUN echo '<Directory /var/www/html/>\n\
 
 # Pastikan folder uploads bisa diakses
 RUN mkdir -p /var/www/html/uploads \
-  && chown -R www-data:www-data /var/www/html/uploads
+  && chmod -R 777 /var/www/html/uploads
+
+RUN mkdir -p /var/www/html/uploads/csv /var/www/html/uploads/dokumentasi \
+  && chmod -R 777 /var/www/html/uploads
 
   # Expose port baru
 EXPOSE 8080
