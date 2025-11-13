@@ -33,5 +33,9 @@ RUN mkdir -p /var/www/html/uploads \
   # Expose port baru
 EXPOSE 8080
 
+RUN mkdir -p /var/www/html/uploads/dokumentasi \
+    && mkdir -p /var/www/html/uploads/csv \
+    && chmod -R 777 /var/www/html/uploads
+
 # Jalankan Apache di foreground
 CMD ["apache2-foreground"]
