@@ -64,10 +64,16 @@ $upload_dir_csv = $base_dir . '/uploads/csv/';
         $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
 
         if (in_array($ext, $allowed)) {
-            $new_name = time() . '-' . basename($dok['name']);
-            $target = $upload_dir_dok . $new_name;
-            if (move_uploaded_file($dok['tmp_name'], $target)) {
-                $dokumentasi = $new_name;
+        // Bersihkan nama file
+        $clean_name = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $dok['name']);
+
+        // Nama unik
+        $new_name = time() . '-' . $clean_name;
+
+        $target = $upload_dir_dok . $new_name;
+
+        if (move_uploaded_file($dok['tmp_name'], $target)) {
+            $dokumentasi = $new_name;
             }
         }
     }
