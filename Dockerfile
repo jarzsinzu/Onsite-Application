@@ -1,4 +1,4 @@
-FROM php:8.2.12-apache
+FROM php:8.1-apache
 
 # Ganti port Apache ke 8080 biar bisa jalan non-root
 RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
