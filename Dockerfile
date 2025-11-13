@@ -23,12 +23,12 @@ RUN echo '<Directory /var/www/html/>\n\
 </Directory>' > /etc/apache2/conf-available/custom-permission.conf \
 && a2enconf custom-permission
 
-# Pastikan folder uploads bisa diakses
+# Siapkan folder uploads untuk OpenShift (random UID friendly)
 RUN mkdir -p /var/www/html/uploads \
-  && chmod -R 777 /var/www/html/uploads
-
-RUN mkdir -p /var/www/html/uploads/csv /var/www/html/uploads/dokumentasi \
-  && chmod -R 777 /var/www/html/uploads
+    && mkdir -p /var/www/html/uploads/csv \
+    && mkdir -p /var/www/html/uploads/dokumentasi \
+    && chgrp -R 0 /var/www/html/uploads \
+    && chmod -R g+rwX /var/www/html/uploads
 
   # Expose port baru
 EXPOSE 8080
